@@ -70,7 +70,7 @@ dev = [
     "huggingface-hub[hf-xet]>=0.32.4",
     "sglang[all]>=0.5.2",
     "sgl-kernel>=0.2.10",
-    "flashinfer>=0.3.1",
+    "flashinfer-python>=0.3.1",
 ]
 infra = [
     "boto3>=1.38.24",

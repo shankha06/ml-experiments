@@ -25,8 +25,10 @@ class SASRecModule(nn.Module):
             dropout=dropout,
             batch_first=True,  # Crucial for our data shape
         )
+
+        norm = nn.LayerNorm(embedding_dim)
         self.transformer_encoder = nn.TransformerEncoder(
-            transformer_encoder_layer, num_layers=num_layers
+            transformer_encoder_layer, num_layers=num_layers, norm=norm
         )
 
         # 4. Predicts the next month's feature vector
@@ -122,7 +124,7 @@ SEQUENCE_LENGTH = 8  # Total months of data per user
 NUM_FEATURES = 144  # Example: Number of features per month
 EMBEDDING_DIM = 128  # Model's internal dimension
 NUM_HEADS = 4  # Number of attention heads
-NUM_LAYERS = 2  # Number of transformer blocks
+NUM_LAYERS = 8  # Number of transformer blocks
 EPOCHS = 20
 BATCH_SIZE = 16
 LEARNING_RATE = 0.001
@@ -137,8 +139,7 @@ print(f"Using device: {device}")
 
 # --- 1. Simulate User Data ---
 # Shape: (num_users, sequence_length, num_features)
-# Each user has a sequence of 6 months, and each month has 25 features.
-user_data = torch.randn(NUM_USERS, SEQUENCE_LENGTH, NUM_FEATURES)
+user_data = torch.randn(NUM_USERS, SEQUENCE_LENGTH+4, NUM_FEATURES)
 print(f"Simulated data shape: {user_data.shape}\n")
 
 

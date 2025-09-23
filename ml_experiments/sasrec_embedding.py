@@ -280,7 +280,7 @@ print("--- Training Complete ---")
 # Example: Get embedding for the first user's first 5 months
 model.eval()
 with torch.no_grad():
-    example_user_seq = user_data[0:1, :5, :].to(device)  # Shape: (1, 5, 25)
+    example_user_seq = user_data[0:1, :SEQUENCE_LENGTH, :].to(device)  # Shape: (1, 5, 25)
 
     # Internal representation up to Transformer encoder
     month_embeds = model.month_embedding(example_user_seq)

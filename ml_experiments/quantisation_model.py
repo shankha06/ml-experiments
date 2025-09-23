@@ -1,4 +1,3 @@
-import torch
 import pandas as pd
 from awq import AutoAWQForCausalLM
 from transformers import AutoTokenizer
@@ -14,12 +13,7 @@ local_data = data["text"].tolist()
 
 
 # Quantization configuration
-quant_config = {
-    "zero_point": True,
-    "q_group_size": 128,
-    "w_bit": 4,
-    "version": "GEMM"
-}
+quant_config = {"zero_point": True, "q_group_size": 128, "w_bit": 4, "version": "GEMM"}
 
 # Load the model and tokenizer
 model = AutoAWQForCausalLM.from_pretrained(model_path, **{"low_cpu_mem_usage": True})

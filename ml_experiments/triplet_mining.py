@@ -1,7 +1,7 @@
 import json
 import random
 from collections import defaultdict
-from itertools import combinations
+
 
 def create_triplets(data, num_triplets=10000, hard_mining_threshold=0.5):
     """
@@ -18,7 +18,7 @@ def create_triplets(data, num_triplets=10000, hard_mining_threshold=0.5):
     """
     merchants = list(data.keys())
     triplets = []
-    
+
     # Create a mapping from individual tags to the merchants that use them
     tag_to_merchants = defaultdict(set)
     for merchant, tags in data.items():
@@ -33,7 +33,7 @@ def create_triplets(data, num_triplets=10000, hard_mining_threshold=0.5):
         # 1. Select a random anchor merchant and its tags (query)
         anchor_merchant = random.choice(merchants)
         anchor_tags = data_sets[anchor_merchant]
-        
+
         # 2. Select a positive merchant and its tags
         # A simple way to find a positive is to find another merchant that shares some tags
         # In a real-world scenario, you might have a more sophisticated way to define positives
@@ -42,49 +42,58 @@ def create_triplets(data, num_triplets=10000, hard_mining_threshold=0.5):
             continue
 
         positive_merchant = None
-        for _ in range(10): # Try a few times to find a good positive
+        for _ in range(10):  # Try a few times to find a good positive
             candidate_merchant = random.choice(other_merchants)
             candidate_tags = data_sets[candidate_merchant]
-            
+
             # A simple rule for a positive: has a significant overlap with the anchor
             if len(anchor_tags.intersection(candidate_tags)) > 0.5 * len(anchor_tags):
                 positive_merchant = candidate_merchant
                 break
-        
+
         if not positive_merchant:
             continue
-        
+
         positive_tags = data_sets[positive_merchant]
-        
+
         # 3. Find a hard negative merchant
         hard_negative_merchant = None
-        for _ in range(100): # Try a few times to find a hard negative
-            candidate_merchant = random.choice([m for m in merchants if m != anchor_merchant and m != positive_merchant])
+        for _ in range(100):  # Try a few times to find a hard negative
+            candidate_merchant = random.choice(
+                [
+                    m
+                    for m in merchants
+                    if m != anchor_merchant and m != positive_merchant
+                ]
+            )
             candidate_tags = data_sets[candidate_merchant]
-            
+
             # --- Hard and Semi-Hard Mining Logic ---
             # A negative is "hard" if it has a high overlap with the positive tags
-            overlap_ratio = len(positive_tags.intersection(candidate_tags)) / len(positive_tags)
-            
+            overlap_ratio = len(positive_tags.intersection(candidate_tags)) / len(
+                positive_tags
+            )
+
             # The logic below can be adjusted for your specific needs
             if overlap_ratio >= hard_mining_threshold:
                 hard_negative_merchant = candidate_merchant
                 break
-        
+
         if not hard_negative_merchant:
             continue
 
         hard_negative_tags = data_sets[hard_negative_merchant]
-        
+
         # 4. Create the triplet dictionary
         triplet = {
             "query": list(anchor_tags),
             "similar_tags": list(positive_tags),
-            "negative_tags": list(hard_negative_tags)
+            "negative_tags": list(hard_negative_tags),
         }
         triplets.append(triplet)
-        
+
     return triplets
+
 
 # --- Example Usage ---
 # Dummy data based on your description
@@ -110,7 +119,7 @@ for i in range(100):
 triplets_data = create_triplets(data, num_triplets=1000)
 
 # Save to a JSON file
-with open('triplets_dataset.json', 'w') as f:
+with open("triplets_dataset.json", "w") as f:
     json.dump(triplets_data, f, indent=4)
 
 print(f"Generated {len(triplets_data)} triplets and saved to triplets_dataset.json")

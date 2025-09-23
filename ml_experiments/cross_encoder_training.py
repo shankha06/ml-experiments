@@ -1,26 +1,29 @@
 import logging
-import traceback
 from collections import defaultdict
 
 import torch
-from datasets import load_dataset
-from torch import nn
-
 from sentence_transformers.cross_encoder import CrossEncoder
 from sentence_transformers.cross_encoder.evaluation import CrossEncoderNanoBEIREvaluator
 from sentence_transformers.cross_encoder.losses.CachedMultipleNegativesRankingLoss import (
     CachedMultipleNegativesRankingLoss,
 )
 from sentence_transformers.cross_encoder.trainer import CrossEncoderTrainer
-from sentence_transformers.cross_encoder.training_args import CrossEncoderTrainingArguments
+from sentence_transformers.cross_encoder.training_args import (
+    CrossEncoderTrainingArguments,
+)
 from sentence_transformers.training_args import BatchSamplers
+from torch import nn
 
 
 def main():
     model_name = "models/bert-base-uncased"
 
     # Set the log level to INFO to get more information
-    logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
+    logging.basicConfig(
+        format="%(asctime)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.INFO,
+    )
 
     train_batch_size = 32
     num_epochs = 2
@@ -35,25 +38,35 @@ def main():
     # 2. Load the MS MARCO dataset: https://huggingface.co/datasets/microsoft/ms_marco
     logging.info("Read train dataset")
 
-
     def mnrl_mapper(batch):
         outputs = defaultdict(list)
         num_negatives = 5
-        for query, passages_info in zip(batch["query"], batch["passages"]):
-            if sum([boolean == 0 for boolean in passages_info["is_selected"]]) < num_negatives:
+        for query, passages_info in zip(batch["query"], batch["passages"], strict=False):
+            if (
+                sum([boolean == 0 for boolean in passages_info["is_selected"]])
+                < num_negatives
+            ):
                 continue
             if 1 not in passages_info["is_selected"]:
                 continue
             positive_idx = passages_info["is_selected"].index(1)
-            negatives = [idx for idx, is_selected in enumerate(passages_info["is_selected"]) if not is_selected][:5]
+            negatives = [
+                idx
+                for idx, is_selected in enumerate(passages_info["is_selected"])
+                if not is_selected
+            ][:5]
 
             outputs["query"].append(query)
             outputs["positive"].append(passages_info["passage_text"][positive_idx])
             for idx in range(num_negatives):
-                outputs[f"negative_{idx + 1}"].append(passages_info["passage_text"][negatives[idx]])
+                outputs[f"negative_{idx + 1}"].append(
+                    passages_info["passage_text"][negatives[idx]]
+                )
         return outputs
 
-    dataset = dataset.map(mnrl_mapper, batched=True, remove_columns=dataset.column_names)
+    dataset = dataset.map(
+        mnrl_mapper, batched=True, remove_columns=dataset.column_names
+    )
     dataset = dataset.train_test_split(test_size=10_000)
     train_dataset = dataset["train"]
     eval_dataset = dataset["test"]
@@ -71,11 +84,15 @@ def main():
     )
 
     # 4. Define the evaluator. We use the CrossEncoderNanoBEIREvaluator, which is a light-weight evaluator for English reranking
-    evaluator = CrossEncoderNanoBEIREvaluator(dataset_names=["msmarco", "nfcorpus", "nq"], batch_size=train_batch_size)
+    evaluator = CrossEncoderNanoBEIREvaluator(
+        dataset_names=["msmarco", "nfcorpus", "nq"], batch_size=train_batch_size
+    )
     evaluator(model)
 
     # 5. Define the training arguments
-    short_model_name = model_name if "/" not in model_name else model_name.split("/")[-1]
+    short_model_name = (
+        model_name if "/" not in model_name else model_name.split("/")[-1]
+    )
     run_name = f"reranker-msmarco-v1.1-{short_model_name}-cmnrl"
     args = CrossEncoderTrainingArguments(
         # Required parameter:
@@ -121,7 +138,6 @@ def main():
     # 8. Save the final model
     final_output_dir = f"models/{run_name}/final"
     model.save_pretrained(final_output_dir)
-
 
 
 if __name__ == "__main__":

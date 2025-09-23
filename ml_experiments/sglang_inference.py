@@ -1,6 +1,5 @@
 # python3 -m sglang.launch_server --model-path openai/gpt-oss-20b --host 0.0.0.0 --port 30000 --trust-remote-code
 
-import os
 from openai import OpenAI
 
 # Set up the OpenAI client to point to the SGLang server
@@ -10,13 +9,14 @@ client = OpenAI(
     base_url="http://localhost:30000/v1",
 )
 
+
 def run_inference(prompt, model_name="openai/gpt-oss-20b"):
     """
     Sends a prompt to the SGLang server for inference and prints the response.
     """
     messages = [
         {"role": "system", "content": "You are a helpful and creative assistant."},
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": prompt},
     ]
 
     try:
@@ -33,9 +33,10 @@ def run_inference(prompt, model_name="openai/gpt-oss-20b"):
             print(f"Generated Text:\n{generated_text}")
         else:
             print("No response choices found.")
-            
+
     except Exception as e:
         print(f"An error occurred: {e}")
+
 
 # Example usage
 if __name__ == "__main__":

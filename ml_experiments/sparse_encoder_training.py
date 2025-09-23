@@ -1,21 +1,17 @@
-import logging
 
-from datasets import load_dataset
-
+from datasets import Dataset, load_dataset
 from sentence_transformers import (
     SparseEncoder,
-    SparseEncoderModelCardData,
     SparseEncoderTrainer,
     SparseEncoderTrainingArguments,
 )
-from sentence_transformers.sparse_encoder.evaluation import SparseNanoBEIREvaluator
-from sentence_transformers.sparse_encoder.losses import SparseMultipleNegativesRankingLoss, SpladeLoss
-from sentence_transformers.training_args import BatchSamplers
-
-from datasets import Dataset
-
-from sentence_transformers.sparse_encoder import SparseEncoder, SparseEncoderTrainer, losses
+from sentence_transformers.sparse_encoder import (
+    SparseEncoder,
+    SparseEncoderTrainer,
+    losses,
+)
 from sentence_transformers.sparse_encoder.evaluation import SparseTripletEvaluator
+from sentence_transformers.training_args import BatchSamplers
 
 model = SparseEncoder("models/bert")
 # SparseEncoder(
@@ -45,7 +41,10 @@ train_dataset = Dataset.from_dict(
     }
 )
 loss = losses.SpladeLoss(
-    model=model, loss=losses.SparseTripletLoss(model), document_regularizer_weight=3e-5, query_regularizer_weight=5e-5
+    model=model,
+    loss=losses.SparseTripletLoss(model),
+    document_regularizer_weight=3e-5,
+    query_regularizer_weight=5e-5,
 )
 # 5. (Optional) Specify training arguments
 run_name = "splade-distilbert-base-uncased-nq"

@@ -1,6 +1,5 @@
 import random
 import time
-import token
 
 import numpy as np
 import pandas as pd
@@ -250,6 +249,7 @@ trainer.save_model(MODEL_NAME)
 # Example of using the fine-tuned model for inference
 from transformers import pipeline
 
+
 def extract_entities(text, model_path, tokenizer, device_index):
     """
     Run NER and return complete MERCHANT and LOCATION entities using aggregated spans.
@@ -308,6 +308,7 @@ def extract_entities(text, model_path, tokenizer, device_index):
         "locations": dedupe(locations),
         "raw": aggregated,  # keep for debugging/inspection
     }
+
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 device_index = 0 if torch.cuda.is_available() else -1

@@ -125,7 +125,7 @@ NUM_FEATURES = 144  # Example: Number of features per month
 EMBEDDING_DIM = 128  # Model's internal dimension
 NUM_HEADS = 4  # Number of attention heads
 NUM_LAYERS = 8  # Number of transformer blocks
-EPOCHS = 20
+EPOCHS = 2
 BATCH_SIZE = 16
 LEARNING_RATE = 0.001
 
@@ -273,25 +273,40 @@ early_stopper.restore_best(model)
 
 print("--- Training Complete ---")
 
+# TODO: Save and Load Model
+
+torch.save(model.state_dict(), "models/model.pt")
+
+model = SASRecModule(
+    num_features=NUM_FEATURES,
+    embedding_dim=EMBEDDING_DIM,
+    num_heads=NUM_HEADS,
+    num_layers=NUM_LAYERS,
+    max_len=SEQUENCE_LENGTH - 1,
+).to(device)
+
+model.load_state_dict(torch.load("models/model.pt"))
+print("Model loaded successfully.")
+
 # --- 5. How to Get Embeddings (Inference) ---
 # After training, you can get a user's embedding by feeding their data
 # into the model but stopping before the final prediction layer.
 
-# Example: Get embedding for the first user's first 5 months
+# Example: Get embedding for the first user's first SEQUENCE_LENGTH months
 model.eval()
+seq_len = SEQUENCE_LENGTH - 1
 with torch.no_grad():
-    example_user_seq = user_data[0:1, :SEQUENCE_LENGTH, :].to(device)  # Shape: (1, 5, 25)
+    example_user_seq = user_data[0:1, :seq_len, :].to(device)
+    print(f"Example user sequence shape: {example_user_seq.shape}")
 
     # Internal representation up to Transformer encoder
     month_embeds = model.month_embedding(example_user_seq)
-    pos_ids = torch.arange(5, device=device).unsqueeze(0)
+    pos_ids = torch.arange(seq_len, device=device).unsqueeze(0)
     pos_embeds = model.positional_embedding(pos_ids)
     x = model.dropout(month_embeds + pos_embeds)
-    mask = model._generate_causal_mask(5).to(device)
+
+    mask = model._generate_causal_mask(seq_len).to(device)
 
     transformer_output = model.transformer_encoder(x, mask=mask)
-
-    # The embedding is the output for the last element in the sequence
     user_embedding = transformer_output[:, -1, :]
-
     print(f"\nShape of the final user embedding: {user_embedding.shape}")

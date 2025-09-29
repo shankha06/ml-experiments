@@ -123,3 +123,92 @@ merged_model = merged_model.merge_and_unload() # This merges the weights
 
 # Save the final, ready-to-deploy model
 merged_model.save_pretrained("./final_deployable_model")
+
+import torch
+from datasets import Dataset
+from transformers import AutoTokenizer
+
+# --- 1. Load the same tokenizer used for your model ---
+model_id = "./llama-7b-wanda-pruned" # Path to your pruned model/tokenizer
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+# Add a padding token if it doesn't exist
+if tokenizer.pad_token is None:
+    tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+
+
+# --- 2. Create your raw data ---
+# A mix of classification and ranking examples
+raw_data = [
+    # Classification Example 1
+    {
+        "instruction": "Classify the user's request into one of the following categories: [Account Inquiry, Fraud Report, Loan Application].",
+        "input": "There is a charge on my credit card from a store I've never been to.",
+        "output": "Fraud Report"
+    },
+    # Classification Example 2
+    {
+        "instruction": "Classify the user's request into one of the following categories: [Account Inquiry, Fraud Report, Loan Application].",
+        "input": "I would like to apply for a mortgage to buy my first home.",
+        "output": "Loan Application"
+    },
+    # Ranking Example
+    {
+        "instruction": "Rank the following banking services based on their relevance to the user query.",
+        "input": {
+            "query": "How can I save for a down payment on a house?",
+            "items": [
+                "A: Open a high-yield savings account.",
+                "B: Apply for a new credit card with travel rewards.",
+                "C: Schedule a consultation with a mortgage advisor."
+            ]
+        },
+        "output": "C, A, B"
+    }
+]
+
+# Convert to a Hugging Face Dataset object
+dataset = Dataset.from_list(raw_data)
+
+
+# --- 3. Create the Preprocessing Function ---
+def preprocess_function(examples):
+    # Combine instruction and input into a prompt
+    prompts = []
+    for i in range(len(examples['instruction'])):
+        # Handle different input formats (string vs. dict)
+        if isinstance(examples['input'][i], dict): # For ranking task
+            query = examples['input'][i]['query']
+            items = "\n".join(examples['input'][i]['items'])
+            input_text = f"Query: {query}\nItems:\n{items}"
+        else: # For classification task
+            input_text = examples['input'][i]
+
+        prompt = f"### Instruction:\n{examples['instruction'][i]}\n\n### Input:\n{input_text}\n\n### Response:\n"
+        prompts.append(prompt)
+
+    # Tokenize the full text (prompt + output)
+    full_texts = [p + o for p, o in zip(prompts, examples['output'])]
+    
+    # Tokenize everything
+    model_inputs = tokenizer(full_texts, padding="max_length", truncation=True, max_length=512)
+    
+    # Tokenize prompts separately to find their length for masking
+    prompt_tokens = tokenizer(prompts, padding=False, truncation=True)
+
+    labels = torch.tensor(model_inputs["input_ids"])
+    
+    # Mask the prompt part of the labels
+    for i in range(len(prompt_tokens["input_ids"])):
+        prompt_len = len(prompt_tokens["input_ids"][i])
+        labels[i, :prompt_len] = -100 # -100 is the ignore_index for the loss function
+
+    model_inputs["labels"] = labels.tolist()
+    return model_inputs
+
+
+# --- 4. Apply the function and prepare the dataset ---
+processed_dataset = dataset.map(preprocess_function, batched=True, remove_columns=dataset.column_names)
+
+print("Dataset is ready for the Trainer.")
+print("Example of one processed item:")
+print(processed_dataset[0])

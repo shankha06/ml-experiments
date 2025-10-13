@@ -14,23 +14,19 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set,
 # --- Configuration & Data Pools ---
 
 NUM_SAMPLES = 10000
-MAX_RESULTS_PER_QUERY = 10  # Total number of links shown for a query
+MAX_RESULTS_PER_QUERY = 4  # Total number of links shown for a query
 
-# Pools of data to make the logs more realistic
+# Pools of data to make the logs more realistic. Queries based on bankin queries for things retail customers would want to access
 QUERIES = [
-    "best python courses for beginners", "machine learning tutorials", "data science roadmap",
-    "healthy breakfast ideas", "how to bake sourdough bread", "best travel destinations in asia",
-    "cheap flights to tokyo", "hotel in chennai", "latest smartphone reviews",
-    "nike running shoes for men", "adidas ultra boost sale", "best headphones 2025",
-    "troubleshoot wifi connection", "git merge conflict resolution", "stock market trends"
+    "transaction history", "spending trend",
+    "lost my credit card", "how to change password",
+    "card benefits", "increase account limit", "how to apply for credit card",
 ]
 
+
 DOMAINS = [
-    "https://tech-tutorials.com", "https://e-learn.io", "https://datacamp.net",
-    "https://food-recipes.org", "https://bakers-delight.com", "https://globetrotter.co",
-    "https://travel-deals.com", "https://booking-plus.com", "https://gadget-reviews.tech",
-    "https://shoppers-world.com", "https://sports-gear.io", "https://audiophile.guru",
-    "https://helpdesk-forum.com", "https://code-stack.dev", "https://invest-daily.news"
+    "https://www.bank-abc.com", "https://www.bank-xyz.com"
+
 ]
 
 URL_PATHS = [
@@ -637,6 +633,44 @@ if __name__ == "__main__":
     user_id_pool = [f"u{random.randint(1000, 9999)}" for _ in range(num_unique_users)]
 
     all_sessions = [generate_session(i, user_id_pool) for i in range(NUM_SAMPLES)]
+    print(all_sessions[1])
+
+    """
+    {
+        "query": "best python courses for beginners",
+        "user_id": "u8884",
+        "session_id": "s2",
+        "timestamp": 1758922149,
+        "clicks": [
+            {
+                "link": "https://bakers-delight.com/products/best-python-courses-for-beginners-1",
+                "rank": 1,
+                "click_timestamp": 1758922160,
+                "dwell_seconds": 27.02
+            },
+            {
+                "link": "https://bakers-delight.com/listings/best-python-courses-for-beginners-2",
+                "rank": 2,
+                "timestamp": 1758922171,
+                "dwell_seconds": 146.25
+            }
+        ],
+        "impressions": [
+            {
+                "link": "https://bakers-delight.com/listings/best-python-courses-for-beginners-3",
+                "position": 3,
+                "timestamp": 1758922149,
+                "skip_type": "user_scrolled_past"
+            },
+            {
+                "link": "https://bakers-delight.com/guides/best-python-courses-for-beginners-4",
+                "position": 4,
+                "impression_time": 1758922149,
+                "skip_type": "impression"
+            }
+        ]
+    }
+    """
 
     # --- Output ---
 

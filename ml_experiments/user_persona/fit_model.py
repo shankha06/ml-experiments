@@ -27,9 +27,7 @@ print(f"Current Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 ################################################################################
 # PART 0: SYNTHETIC DATA GENERATION
 ################################################################################
-# This part creates the dataset files so the script can run independently.
 
-# Define our universe of navigation links (our "items")
 NAV_LINKS = {
     "link_01": {"text": "View Account Balance", "category": "accounts"},
     "link_02": {"text": "See Recent Transactions", "category": "accounts"},
@@ -187,8 +185,6 @@ num_numerical_features = len(numerical_cols) + 2 # premium_user, has_mortgage
 user_tower = UserTower(num_users, num_numerical_features, embedding_dim).to(device)
 item_tower = ItemTower(num_items, embedding_dim).to(device)
 
-# Prepare data for training
-# We merge user features into the training data to align them for the DataLoader
 merged_training_data = training_data.merge(user_features, on='user_id', suffixes=('', '_y'))
 user_idx_tensor = torch.tensor(merged_training_data['user_idx_y'].values, dtype=torch.long)
 numerical_features_tensor = torch.tensor(
@@ -199,7 +195,6 @@ item_idx_tensor = torch.tensor(merged_training_data['item_idx'].values, dtype=to
 dataset = TensorDataset(user_idx_tensor, numerical_features_tensor, item_idx_tensor)
 dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
 
-# Optimizer and Loss
 params = list(user_tower.parameters()) + list(item_tower.parameters())
 optimizer = optim.Adam(params, lr=0.01)
 loss_fn = nn.CrossEntropyLoss()
@@ -215,13 +210,8 @@ for epoch in range(5):
         optimizer.zero_grad()
         
         user_embeddings = user_tower(user_idx, numerical_feats)
-        # Get embeddings for all items to use as negatives
         all_item_embeddings = item_tower.item_embed.weight
-        
-        # Dot product scores between user embeddings and all item embeddings
         scores = torch.matmul(user_embeddings, all_item_embeddings.t())
-        
-        # The target labels are the indices of the positive items
         loss = loss_fn(scores, item_idx)
         
         loss.backward()
@@ -236,16 +226,11 @@ user_tower.eval()
 item_tower.eval()
 
 with torch.no_grad():
-    # 1. Get all item embeddings
     all_item_indices = torch.arange(num_items, device=device)
     all_item_embeddings = item_tower(all_item_indices).cpu().numpy()
-
-    # 2. Build FAISS index
     index = faiss.IndexFlatL2(embedding_dim)
     index.add(all_item_embeddings)
     print(f"FAISS index built with {index.ntotal} items.")
-
-    # 3. Get a user's embedding
     sample_user_id = 'u101'
     user_profile = user_features[user_features['user_id'] == sample_user_id]
     user_idx_val = torch.tensor(user_profile['user_idx'].values, dtype=torch.long).to(device)
@@ -254,24 +239,15 @@ with torch.no_grad():
     ).to(device)
     
     user_embedding = user_tower(user_idx_val, user_feats_val).cpu().numpy()
-
-    # 4. Query FAISS for top candidates
     k = 5
     distances, indices = index.search(user_embedding, k)
     retrieved_link_ids = item_encoder.inverse_transform(indices[0])
     print(f"Top {k} candidates for user {sample_user_id}: {list(retrieved_link_ids)}")
     candidates = list(retrieved_link_ids)
 
-
-################################################################################
-# PART 2: RERANKING (HoME-STYLE MODEL)
-################################################################################
 print("\n--- STAGE 2: RERANKING (HoME) ---")
-
-# --- 2.1 Data Loading and Preprocessing ---
 df_log = pd.read_json("log_training_dataset.json")
 
-# Create a flat dataset for pointwise ranking
 rerank_data = []
 for _, row in df_log.iterrows():
     # Positive example
@@ -405,7 +381,6 @@ def get_personalized_nav_links(user_id, query, top_k=3):
     reranker_model.eval()
     
     with torch.no_grad():
-        # --- Stage 1: Candidate Generation ---
         user_profile = user_features[user_features['user_id'] == user_id]
         if user_profile.empty:
             print(f"User {user_id} not found. Returning default links.")
@@ -421,7 +396,6 @@ def get_personalized_nav_links(user_id, query, top_k=3):
         candidate_links = item_encoder.inverse_transform(indices[0])
         print(f"Stage 1 Candidates: {list(candidate_links)}")
 
-        # --- Stage 2: Reranking ---
         rerank_features = []
         query_embedding = sbert_model.encode([query])
         for link_id in candidate_links:
@@ -449,11 +423,10 @@ def get_personalized_nav_links(user_id, query, top_k=3):
         final_links = [link for link, score in scored_candidates[:top_k]]
         return final_links
 
-# --- Run examples ---
-# Example 1: A user with a mortgage who is likely to be interested in loans
+# --- examples ---
+
 final_recommendations = get_personalized_nav_links(user_id='u101', query="check rates")
 print(f"\nFinal Top 3 Recommended Links: {final_recommendations}")
 
-# Example 2: A different user with a general query
 final_recommendations = get_personalized_nav_links(user_id='u888', query="how to pay")
 print(f"\nFinal Top 3 Recommended Links: {final_recommendations}")

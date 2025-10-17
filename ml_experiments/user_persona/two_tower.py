@@ -14,17 +14,23 @@ Stage 2: HoME-style Multi-Task Ranker
 This script adds a full training pipeline that consumes:
   data/personalization/training_dataset.json
 and trains both stages end-to-end with simple text/user encoders.
+
+Modification:
+- User encoder now consumes historical banking data from CSV (shape per-user: 9 x 141)
+- Ranking supervision continues to come from training_dataset.json
 """
 
+import csv
 import json
 import math
 import os
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.utils.rnn import pack_padded_sequence
 from torch.utils.data import DataLoader, Dataset
 
 # rich logging
@@ -90,7 +96,7 @@ class Vocabulary:
 
 
 # -----------------------------
-# Dataset
+# Dataset (ranking supervision)
 # -----------------------------
 
 class PersonalizationDataset(Dataset):
@@ -187,7 +193,187 @@ class PersonalizationDataset(Dataset):
 
 
 # -----------------------------
-# Encoders
+# User history store and encoder
+# -----------------------------
+
+class UserHistoryStore:
+    """
+    Loads per-user monthly banking features from CSV.
+    Expected CSV columns:
+      - user_id: string or int (must match IDs in training_dataset.json)
+      - month: integer-like (orderable; most recent months are used if > months)
+      - 141 feature columns (any names). All non [user_id, month] columns are treated as features.
+
+    Builds tensors of shape:
+      user_hist: [num_users, months, feat_dim] with right-aligned recent months and zero padding
+      user_lengths: [num_users] number of available months per user (<= months)
+    """
+    def __init__(self, csv_path: str, user_to_id: Dict[str, int], months: int = 9, feat_dim_hint: Optional[int] = 141):
+        self.months = months
+        self.user_to_id = user_to_id
+        self.num_users = len(user_to_id)
+        self.feat_dim: int = 0
+        self.user_hist = None  # torch.FloatTensor [U, months, F]
+        self.user_lengths = None  # torch.LongTensor [U]
+
+        self._build(csv_path, feat_dim_hint)
+
+    def _build(self, csv_path: str, feat_dim_hint: Optional[int]):
+        if not os.path.exists(csv_path):
+            console.print(Panel.fit(
+                f"[bold yellow]Warning[/]: User history CSV not found at {csv_path}. "
+                "All user histories will be zeros.", title="UserHistoryStore"
+            ))
+            self.feat_dim = int(feat_dim_hint or 141)
+            self.user_hist = torch.zeros(self.num_users, self.months, self.feat_dim, dtype=torch.float32)
+            self.user_lengths = torch.zeros(self.num_users, dtype=torch.long)
+            self._print_summary(csv_path, feature_cols=None, loaded_rows=0)
+            return
+
+        # Aggregate rows per user
+        per_user: Dict[str, List[Tuple[float, List[float]]]] = {}
+        feature_cols: List[str] = []
+        loaded_rows = 0
+
+        with open(csv_path, "r", newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            if reader.fieldnames is None:
+                raise ValueError("CSV appears to have no header.")
+            feature_cols = [c for c in reader.fieldnames if c not in ("user_id", "month")]
+            if len(feature_cols) == 0:
+                raise ValueError("CSV must contain feature columns besides 'user_id' and 'month'.")
+
+            for row in reader:
+                uid_raw = row.get("user_id", "")
+                month_raw = row.get("month", "")
+                # Ignore rows with missing keys
+                if uid_raw == "" or month_raw == "":
+                    continue
+                uid_str = str(uid_raw)
+                # Map to internal user index if present
+                if uid_str not in self.user_to_id:
+                    # Skip users not present in ranking dataset
+                    continue
+                try:
+                    month_val = float(month_raw)
+                except ValueError:
+                    # Try to extract number from string (e.g., YYYYMM)
+                    digits = re.findall(r"\d+", month_raw)
+                    month_val = float(digits[-1]) if digits else 0.0
+
+                # Parse features
+                feats: List[float] = []
+                for col in feature_cols:
+                    v = row.get(col, "")
+                    try:
+                        feats.append(float(v) if v != "" else 0.0)
+                    except ValueError:
+                        feats.append(0.0)
+                if feat_dim_hint is not None and len(feats) != int(feat_dim_hint):
+                    # If mismatch, we'll still accept but warn once later
+                    pass
+
+                per_user.setdefault(uid_str, []).append((month_val, feats))
+                loaded_rows += 1
+
+        # Determine feat_dim
+        if len(feature_cols) > 0:
+            self.feat_dim = len(feature_cols)
+        else:
+            self.feat_dim = int(feat_dim_hint or 141)
+        if feat_dim_hint is not None and self.feat_dim != int(feat_dim_hint):
+            console.print(Panel.fit(
+                f"[yellow]Feature dimension mismatch[/]: CSV has {self.feat_dim} features but hint was {feat_dim_hint}. "
+                "Proceeding with CSV-derived dimension.", title="UserHistoryStore"
+            ))
+
+        # Initialize tensors
+        self.user_hist = torch.zeros(self.num_users, self.months, self.feat_dim, dtype=torch.float32)
+        self.user_lengths = torch.zeros(self.num_users, dtype=torch.long)
+
+        # Fill tensors per user
+        for uid_str, idx in self.user_to_id.items():
+            rows = per_user.get(uid_str, [])
+            if not rows:
+                continue
+            # sort by month (ascending), take last 'months' entries
+            rows.sort(key=lambda x: x[0])
+            rows = rows[-self.months:]
+            L = len(rows)
+            self.user_lengths[idx] = L
+            # right-align the most recent months
+            start = self.months - L
+            for i, (_, feats) in enumerate(rows):
+                # truncate or pad features if necessary
+                if len(feats) >= self.feat_dim:
+                    fv = feats[: self.feat_dim]
+                else:
+                    fv = feats + [0.0] * (self.feat_dim - len(feats))
+                self.user_hist[idx, start + i, :] = torch.tensor(fv, dtype=torch.float32)
+
+        self._print_summary(csv_path, feature_cols, loaded_rows)
+
+    def _print_summary(self, csv_path: str, feature_cols: Optional[List[str]], loaded_rows: int):
+        table = Table(title="UserHistoryStore Summary", title_style="bold green")
+        table.add_column("Field", style="bold")
+        table.add_column("Value")
+        table.add_row("CSV Path", csv_path)
+        table.add_row("Users (ranking dataset)", str(self.num_users))
+        table.add_row("Loaded Rows", str(loaded_rows))
+        table.add_row("Months window", str(self.months))
+        table.add_row("Feature dim", str(self.feat_dim))
+        if feature_cols is not None:
+            table.add_row("Num feature columns", str(len(feature_cols)))
+        console.print(table)
+
+    @torch.no_grad()
+    def get_batch(self, user_ids: torch.Tensor, device: torch.device) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Returns:
+          hist: [B, months, feat_dim] float32
+          lengths: [B] long
+        """
+        idx = user_ids.detach().to("cpu").long()
+        hist = self.user_hist.index_select(0, idx)
+        lengths = self.user_lengths.index_select(0, idx)
+        return hist.to(device), lengths.to(device)
+
+
+class UserHistoryEncoder(nn.Module):
+    """
+    Encodes per-user monthly banking history [B, months, feat_dim] -> [B, 512].
+    Uses a bidirectional GRU over months and projects to 512-dim user feature vector.
+    """
+    def __init__(self, feat_dim: int = 141, hidden: int = 256):
+        super().__init__()
+        self.gru = nn.GRU(input_size=feat_dim, hidden_size=hidden, num_layers=1,
+                          batch_first=True, bidirectional=True)
+        self.proj = nn.Sequential(
+            nn.LayerNorm(2 * hidden),
+            nn.Linear(2 * hidden, 512),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+        )
+
+    def forward(self, seq: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+          seq: [B, T, F] user monthly features
+          lengths: [B] number of valid months (<= T)
+        Returns:
+          user_features: [B, 512]
+        """
+        # Ensure at least length 1 to satisfy packing API; zeros will be used for empty
+        lengths_clamped = lengths.clamp(min=1).to("cpu")
+        packed = pack_padded_sequence(seq, lengths_clamped, batch_first=True, enforce_sorted=False)
+        _, h_n = self.gru(packed)  # h_n: [2, B, hidden]
+        # Concatenate last layer's forward and backward hidden states
+        h = torch.cat([h_n[-2], h_n[-1]], dim=1)  # [B, 2*hidden]
+        return self.proj(h)  # [B, 512]
+
+
+# -----------------------------
+# Encoders (text and items)
 # -----------------------------
 
 class MeanEmbedding(nn.Module):
@@ -228,10 +414,11 @@ class TransformerBlock(nn.Module):
 class TwoTowerRetrieval(nn.Module):
     """
     Retrieves candidates with a learnable interaction scorer (FIT-inspired).
+    Expects user_features of size 512 (from UserHistoryEncoder) and item_features of size 256.
     """
     def __init__(self, user_dim=512, item_dim=256, embedding_dim=128):
         super().__init__()
-        # User Tower
+        # User Tower (512 -> embedding_dim)
         self.user_encoder = nn.Sequential(
             nn.Linear(user_dim, 256),
             nn.LayerNorm(256),

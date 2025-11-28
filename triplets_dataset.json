@@ -1,0 +1,3801 @@
+[
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "tacos"
+        ],
+        "similar_tags": [
+            "korean",
+            "shirts",
+            "fine dining",
+            "burritos"
+        ],
+        "negative_tags": [
+            "spicy",
+            "curry",
+            "fine dining",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "sushi",
+            "indian"
+        ],
+        "similar_tags": [
+            "bbq",
+            "sushi",
+            "indian"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "indian",
+            "seafood",
+            "food",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "menswear",
+            "formal"
+        ],
+        "similar_tags": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ],
+        "negative_tags": [
+            "thai",
+            "fine dining",
+            "indian",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "menswear",
+            "thai"
+        ],
+        "similar_tags": [
+            "menswear",
+            "sushi",
+            "clothing",
+            "thai"
+        ],
+        "negative_tags": [
+            "shirts",
+            "menswear",
+            "clothing",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "sushi"
+        ],
+        "similar_tags": [
+            "fine dining",
+            "sushi"
+        ],
+        "negative_tags": [
+            "thai",
+            "fine dining",
+            "indian",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "food"
+        ],
+        "similar_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "similar_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ],
+        "negative_tags": [
+            "korean",
+            "shirts",
+            "fine dining",
+            "burritos"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "tacos"
+        ],
+        "similar_tags": [
+            "tacos",
+            "shirts",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "food",
+            "formal",
+            "spicy"
+        ],
+        "similar_tags": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "fine dining",
+            "spicy"
+        ],
+        "similar_tags": [
+            "korean",
+            "shirts",
+            "fine dining",
+            "burritos"
+        ],
+        "negative_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "curry",
+            "clothing",
+            "indian",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "japanese",
+            "indian"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "food",
+            "thai",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "thai"
+        ],
+        "similar_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ],
+        "similar_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "food",
+            "formal"
+        ],
+        "similar_tags": [
+            "food",
+            "clothing",
+            "formal",
+            "spicy"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "dresses"
+        ],
+        "similar_tags": [
+            "japanese",
+            "dresses",
+            "formal",
+            "thai"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "japanese",
+            "tacos",
+            "formal",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "menswear",
+            "formal"
+        ],
+        "similar_tags": [
+            "formal",
+            "dresses",
+            "seafood"
+        ],
+        "negative_tags": [
+            "seafood",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "clothing",
+            "sushi"
+        ],
+        "similar_tags": [
+            "curry",
+            "clothing",
+            "sushi",
+            "spicy"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "japanese",
+            "indian"
+        ],
+        "similar_tags": [
+            "curry",
+            "indian",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "dresses",
+            "food",
+            "indian",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "negative_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "similar_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ],
+        "negative_tags": [
+            "korean",
+            "food",
+            "burritos",
+            "clothing"
+        ]
+    },
+    {
+        "query": [
+            "burritos",
+            "bbq",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "thai",
+            "burritos",
+            "bbq"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "similar_tags": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "spicy"
+        ],
+        "similar_tags": [
+            "fine dining",
+            "womenswear",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "tacos",
+            "shirts",
+            "fine dining",
+            "indian"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "clothing",
+            "sushi"
+        ],
+        "similar_tags": [
+            "menswear",
+            "sushi",
+            "clothing",
+            "thai"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "thai",
+            "bbq",
+            "sushi",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "food"
+        ],
+        "similar_tags": [
+            "womenswear",
+            "curry",
+            "food",
+            "burritos",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "fine dining",
+            "spicy"
+        ],
+        "similar_tags": [
+            "spicy",
+            "curry",
+            "fine dining",
+            "shirts"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "food",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "japanese",
+            "indian"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "curry",
+            "indian",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "restaurant",
+            "clothing",
+            "spicy"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "tacos",
+            "sushi",
+            "spicy"
+        ],
+        "negative_tags": [
+            "tacos",
+            "burritos",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "shirts",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "similar_tags": [
+            "menswear",
+            "mexican",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "negative_tags": [
+            "mexican",
+            "food",
+            "clothing"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "sushi"
+        ],
+        "similar_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "tacos"
+        ],
+        "similar_tags": [
+            "korean",
+            "shirts",
+            "clothing",
+            "indian"
+        ],
+        "negative_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "clothing",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "curry",
+            "clothing",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "clothing",
+            "indian"
+        ]
+    },
+    {
+        "query": [
+            "burritos",
+            "bbq",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "mexican",
+            "restaurant",
+            "burritos",
+            "bbq"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "food",
+            "thai"
+        ],
+        "similar_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "tacos"
+        ],
+        "similar_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "thai",
+            "tacos",
+            "mexican"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "sushi"
+        ],
+        "similar_tags": [
+            "fine dining",
+            "sushi"
+        ],
+        "negative_tags": [
+            "tacos",
+            "burritos",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "indian",
+            "sushi",
+            "thai"
+        ],
+        "similar_tags": [
+            "indian",
+            "thai"
+        ],
+        "negative_tags": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "food"
+        ],
+        "similar_tags": [
+            "womenswear",
+            "curry",
+            "food",
+            "burritos",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "japanese",
+            "indian"
+        ],
+        "similar_tags": [
+            "japanese",
+            "indian"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "indian",
+            "seafood",
+            "food",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "indian"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "japanese",
+            "indian",
+            "korean",
+            "shirts"
+        ],
+        "negative_tags": [
+            "japanese",
+            "indian",
+            "bbq",
+            "shirts",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "indian",
+            "sushi",
+            "thai"
+        ],
+        "similar_tags": [
+            "bbq",
+            "sushi",
+            "indian"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "thai",
+            "bbq",
+            "sushi",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "similar_tags": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "food",
+            "thai",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "clothing",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "curry",
+            "clothing",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "tacos",
+            "restaurant",
+            "clothing",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ],
+        "similar_tags": [
+            "shirts",
+            "menswear",
+            "clothing",
+            "formal"
+        ],
+        "negative_tags": [
+            "shirts",
+            "food",
+            "clothing",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "similar_tags": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "japanese",
+            "indian",
+            "seafood",
+            "womenswear",
+            "food"
+        ],
+        "negative_tags": [
+            "dresses",
+            "food",
+            "indian",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "burritos",
+            "sushi"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "tacos",
+            "sushi",
+            "spicy"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "curry",
+            "burritos",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "mexican",
+            "seafood",
+            "formal"
+        ],
+        "similar_tags": [
+            "formal",
+            "dresses",
+            "seafood"
+        ],
+        "negative_tags": [
+            "seafood",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "dresses",
+            "burritos",
+            "clothing"
+        ],
+        "negative_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "formal",
+            "japanese",
+            "bbq"
+        ],
+        "similar_tags": [
+            "mexican",
+            "japanese",
+            "burritos",
+            "formal"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "fine dining",
+            "burritos",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "negative_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "fine dining",
+            "womenswear",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "womenswear",
+            "curry",
+            "food",
+            "burritos",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "mexican",
+            "restaurant",
+            "burritos",
+            "bbq"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "burritos",
+            "bbq",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "fine dining",
+            "burritos",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "food"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "curry",
+            "clothing",
+            "sushi",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "food"
+        ],
+        "similar_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "mexican",
+            "dresses",
+            "fine dining"
+        ],
+        "similar_tags": [
+            "korean",
+            "dresses",
+            "thai",
+            "tacos",
+            "mexican"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "burritos",
+            "sushi"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "tacos",
+            "sushi",
+            "spicy"
+        ],
+        "negative_tags": [
+            "japanese",
+            "food",
+            "restaurant",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "formal",
+            "dresses",
+            "seafood"
+        ],
+        "similar_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "food",
+            "clothing",
+            "formal",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "fine dining",
+            "spicy"
+        ],
+        "similar_tags": [
+            "spicy",
+            "curry",
+            "fine dining",
+            "shirts"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "clothing",
+            "sushi"
+        ],
+        "similar_tags": [
+            "menswear",
+            "sushi",
+            "clothing",
+            "thai"
+        ],
+        "negative_tags": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "similar_tags": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "food",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "fine dining",
+            "womenswear",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "burritos",
+            "bbq",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "mexican",
+            "restaurant",
+            "burritos",
+            "bbq"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "seafood",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "seafood",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "burritos",
+            "bbq",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ],
+        "similar_tags": [
+            "thai",
+            "fine dining",
+            "indian",
+            "formal"
+        ],
+        "negative_tags": [
+            "fine dining",
+            "food",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "tacos"
+        ],
+        "similar_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "thai",
+            "tacos",
+            "mexican"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "tacos"
+        ],
+        "similar_tags": [
+            "korean",
+            "shirts",
+            "dresses",
+            "spicy"
+        ],
+        "negative_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "curry",
+            "clothing",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "clothing",
+            "indian"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "shirts",
+            "indian",
+            "spicy"
+        ],
+        "similar_tags": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "japanese",
+            "indian",
+            "korean",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ],
+        "similar_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "negative_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "burritos",
+            "sushi"
+        ],
+        "similar_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "thai",
+            "tacos",
+            "mexican"
+        ]
+    },
+    {
+        "query": [
+            "seafood",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "seafood",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "formal",
+            "dresses",
+            "seafood"
+        ]
+    },
+    {
+        "query": [
+            "seafood",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "seafood",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "womenswear",
+            "curry",
+            "food",
+            "burritos",
+            "fine dining"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "curry",
+            "clothing",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "japanese",
+            "indian"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "menswear",
+            "thai"
+        ],
+        "similar_tags": [
+            "japanese",
+            "menswear",
+            "seafood",
+            "korean",
+            "burritos"
+        ],
+        "negative_tags": [
+            "menswear",
+            "seafood",
+            "korean",
+            "curry",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "mexican",
+            "seafood",
+            "formal"
+        ],
+        "similar_tags": [
+            "seafood",
+            "formal"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "japanese",
+            "tacos",
+            "formal",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ],
+        "similar_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ]
+    },
+    {
+        "query": [
+            "restaurant",
+            "food",
+            "thai",
+            "spicy"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "food",
+            "shirts"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "shirts",
+            "indian",
+            "spicy"
+        ],
+        "similar_tags": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "spicy",
+            "curry",
+            "fine dining",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "burritos",
+            "sushi"
+        ],
+        "similar_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "negative_tags": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "fine dining",
+            "spicy"
+        ],
+        "similar_tags": [
+            "korean",
+            "shirts",
+            "dresses",
+            "spicy"
+        ],
+        "negative_tags": [
+            "spicy",
+            "curry",
+            "fine dining",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "clothing",
+            "sushi"
+        ],
+        "similar_tags": [
+            "curry",
+            "clothing",
+            "sushi",
+            "spicy"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ],
+        "similar_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "food"
+        ],
+        "similar_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "clothing",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "curry",
+            "clothing",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "tacos"
+        ],
+        "similar_tags": [
+            "tacos",
+            "shirts",
+            "fine dining",
+            "indian"
+        ],
+        "negative_tags": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "food",
+            "formal"
+        ],
+        "similar_tags": [
+            "food",
+            "formal",
+            "spicy"
+        ],
+        "negative_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "thai"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ],
+        "negative_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "mexican",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "similar_tags": [
+            "shirts",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "negative_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "dresses",
+            "burritos",
+            "clothing"
+        ],
+        "negative_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "menswear",
+            "thai"
+        ],
+        "similar_tags": [
+            "tacos",
+            "japanese",
+            "menswear",
+            "thai"
+        ],
+        "negative_tags": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "negative_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ],
+        "similar_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "thai",
+            "tacos",
+            "mexican"
+        ]
+    },
+    {
+        "query": [
+            "womenswear",
+            "curry",
+            "food",
+            "burritos",
+            "fine dining"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ],
+        "negative_tags": [
+            "curry",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "shirts",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "similar_tags": [
+            "menswear",
+            "mexican",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "negative_tags": [
+            "mexican",
+            "food",
+            "clothing"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "menswear",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ]
+    },
+    {
+        "query": [
+            "seafood",
+            "formal"
+        ],
+        "similar_tags": [
+            "formal",
+            "dresses",
+            "seafood"
+        ],
+        "negative_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "mexican",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "similar_tags": [
+            "shirts",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "negative_tags": [
+            "mexican",
+            "food",
+            "clothing"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "food",
+            "thai"
+        ],
+        "similar_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "fine dining",
+            "spicy"
+        ],
+        "similar_tags": [
+            "korean",
+            "shirts",
+            "fine dining",
+            "burritos"
+        ],
+        "negative_tags": [
+            "korean",
+            "shirts",
+            "dresses",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "clothing",
+            "spicy"
+        ],
+        "similar_tags": [
+            "curry",
+            "clothing",
+            "sushi",
+            "spicy"
+        ],
+        "negative_tags": [
+            "spicy",
+            "curry",
+            "fine dining",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "mexican",
+            "seafood",
+            "formal"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ],
+        "negative_tags": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ],
+        "similar_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "negative_tags": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "restaurant",
+            "food",
+            "thai",
+            "spicy"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "food",
+            "shirts"
+        ],
+        "negative_tags": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "dresses",
+            "spicy"
+        ],
+        "similar_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ],
+        "negative_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "food",
+            "shirts"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "formal",
+            "japanese",
+            "bbq"
+        ],
+        "similar_tags": [
+            "mexican",
+            "japanese",
+            "burritos",
+            "formal"
+        ],
+        "negative_tags": [
+            "japanese",
+            "dresses",
+            "formal",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "restaurant",
+            "clothing"
+        ],
+        "similar_tags": [
+            "tacos",
+            "restaurant",
+            "clothing",
+            "spicy"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "japanese",
+            "tacos",
+            "formal",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "food",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "spicy",
+            "curry",
+            "fine dining",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "restaurant",
+            "clothing",
+            "spicy"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "tacos",
+            "sushi",
+            "spicy"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "japanese",
+            "tacos",
+            "formal",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "menswear",
+            "formal"
+        ],
+        "similar_tags": [
+            "japanese",
+            "dresses",
+            "formal",
+            "thai"
+        ],
+        "negative_tags": [
+            "formal",
+            "dresses",
+            "seafood"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "food",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "curry",
+            "indian",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "curry",
+            "clothing",
+            "indian",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "burritos",
+            "clothing"
+        ],
+        "similar_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ],
+        "negative_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ],
+        "similar_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ],
+        "negative_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "food",
+            "thai"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "food",
+            "thai",
+            "spicy"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "tacos",
+            "sushi",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "food",
+            "formal",
+            "spicy"
+        ],
+        "similar_tags": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "shirts",
+            "food",
+            "clothing",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "dresses"
+        ],
+        "similar_tags": [
+            "japanese",
+            "dresses",
+            "formal",
+            "thai"
+        ],
+        "negative_tags": [
+            "formal",
+            "japanese",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "clothing",
+            "spicy"
+        ],
+        "similar_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ],
+        "negative_tags": [
+            "shirts",
+            "menswear",
+            "clothing",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "mexican",
+            "seafood",
+            "formal"
+        ],
+        "similar_tags": [
+            "seafood",
+            "formal"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "indian",
+            "seafood",
+            "food",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ],
+        "similar_tags": [
+            "food",
+            "clothing",
+            "formal",
+            "spicy"
+        ],
+        "negative_tags": [
+            "food",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "restaurant",
+            "tacos",
+            "sushi",
+            "spicy"
+        ],
+        "similar_tags": [
+            "tacos",
+            "restaurant",
+            "clothing",
+            "spicy"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "food",
+            "thai",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "indian",
+            "sushi",
+            "thai"
+        ],
+        "similar_tags": [
+            "indian",
+            "thai"
+        ],
+        "negative_tags": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "food",
+            "thai"
+        ],
+        "similar_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "burritos",
+            "sushi"
+        ],
+        "similar_tags": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "negative_tags": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "menswear",
+            "thai"
+        ],
+        "similar_tags": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "japanese",
+            "sushi"
+        ],
+        "similar_tags": [
+            "japanese",
+            "clothing",
+            "sushi"
+        ],
+        "negative_tags": [
+            "menswear",
+            "sushi",
+            "clothing",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "burritos",
+            "clothing"
+        ],
+        "similar_tags": [
+            "korean",
+            "food",
+            "burritos",
+            "clothing"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "burritos",
+            "sushi"
+        ],
+        "similar_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "burritos",
+            "clothing"
+        ],
+        "similar_tags": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "dresses",
+            "food",
+            "indian",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ],
+        "similar_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "womenswear",
+            "curry",
+            "food",
+            "burritos",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "spicy"
+        ],
+        "similar_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ],
+        "negative_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "clothing",
+            "sushi"
+        ],
+        "similar_tags": [
+            "menswear",
+            "sushi",
+            "clothing",
+            "thai"
+        ],
+        "negative_tags": [
+            "menswear",
+            "mexican",
+            "food",
+            "clothing",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "shirts",
+            "indian",
+            "spicy"
+        ],
+        "similar_tags": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "japanese",
+            "indian",
+            "seafood",
+            "womenswear",
+            "food"
+        ]
+    },
+    {
+        "query": [
+            "spicy",
+            "mexican",
+            "tacos",
+            "food",
+            "burritos"
+        ],
+        "similar_tags": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "mexican",
+            "food",
+            "clothing"
+        ],
+        "similar_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "food",
+            "clothing",
+            "formal",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "clothing",
+            "sushi"
+        ],
+        "similar_tags": [
+            "menswear",
+            "sushi",
+            "clothing",
+            "thai"
+        ],
+        "negative_tags": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "formal",
+            "dresses",
+            "seafood"
+        ],
+        "similar_tags": [
+            "seafood",
+            "formal"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "japanese",
+            "tacos",
+            "formal",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "food",
+            "formal",
+            "spicy"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "food",
+            "thai",
+            "spicy"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "tacos",
+            "sushi",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "food",
+            "shirts"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "curry",
+            "japanese",
+            "indian"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "clothing",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "curry",
+            "clothing",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "tacos",
+            "restaurant",
+            "clothing",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "food",
+            "thai"
+        ],
+        "similar_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ],
+        "similar_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ],
+        "negative_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "clothing",
+            "spicy"
+        ],
+        "similar_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ],
+        "negative_tags": [
+            "korean",
+            "shirts",
+            "dresses",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ],
+        "similar_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "food",
+            "clothing",
+            "formal",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "thai"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ],
+        "negative_tags": [
+            "korean",
+            "food",
+            "burritos",
+            "clothing"
+        ]
+    },
+    {
+        "query": [
+            "tacos",
+            "shirts",
+            "fine dining",
+            "indian"
+        ],
+        "similar_tags": [
+            "japanese",
+            "indian",
+            "bbq",
+            "shirts",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "japanese",
+            "indian",
+            "korean",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "food",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "japanese",
+            "indian",
+            "seafood",
+            "womenswear",
+            "food"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "indian",
+            "seafood",
+            "food",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "restaurant",
+            "indian",
+            "formal"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "indian",
+            "seafood",
+            "food",
+            "bbq"
+        ],
+        "negative_tags": [
+            "japanese",
+            "indian",
+            "seafood",
+            "womenswear",
+            "food"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "curry",
+            "clothing",
+            "indian",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "womenswear",
+            "curry",
+            "food",
+            "burritos",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "formal",
+            "dresses",
+            "seafood"
+        ],
+        "similar_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "food",
+            "clothing",
+            "formal",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "restaurant",
+            "clothing"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "menswear",
+            "clothing",
+            "indian"
+        ],
+        "negative_tags": [
+            "korean",
+            "shirts",
+            "clothing",
+            "indian"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "clothing",
+            "sushi"
+        ],
+        "similar_tags": [
+            "menswear",
+            "sushi",
+            "clothing",
+            "thai"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "thai",
+            "bbq",
+            "sushi",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ],
+        "negative_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "fine dining",
+            "spicy"
+        ],
+        "similar_tags": [
+            "korean",
+            "shirts",
+            "dresses",
+            "spicy"
+        ],
+        "negative_tags": [
+            "korean",
+            "shirts",
+            "tacos"
+        ]
+    },
+    {
+        "query": [
+            "shirts",
+            "burritos"
+        ],
+        "similar_tags": [
+            "korean",
+            "shirts",
+            "fine dining",
+            "burritos"
+        ],
+        "negative_tags": [
+            "japanese",
+            "indian",
+            "bbq",
+            "shirts",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "restaurant",
+            "food",
+            "thai",
+            "spicy"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "food",
+            "shirts"
+        ],
+        "negative_tags": [
+            "shirts",
+            "food",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "menswear",
+            "thai"
+        ],
+        "similar_tags": [
+            "menswear",
+            "sushi",
+            "clothing",
+            "thai"
+        ],
+        "negative_tags": [
+            "japanese",
+            "clothing",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "tacos"
+        ],
+        "similar_tags": [
+            "korean",
+            "shirts",
+            "dresses",
+            "spicy"
+        ],
+        "negative_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ],
+        "similar_tags": [
+            "thai",
+            "fine dining",
+            "indian",
+            "formal"
+        ],
+        "negative_tags": [
+            "tacos",
+            "shirts",
+            "fine dining",
+            "indian"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "mexican",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "similar_tags": [
+            "shirts",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "negative_tags": [
+            "food",
+            "clothing",
+            "formal",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "food",
+            "thai"
+        ],
+        "similar_tags": [
+            "japanese",
+            "indian",
+            "seafood",
+            "womenswear",
+            "food"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "indian",
+            "seafood",
+            "food",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "formal",
+            "dresses",
+            "seafood"
+        ],
+        "similar_tags": [
+            "dresses",
+            "menswear",
+            "formal"
+        ],
+        "negative_tags": [
+            "japanese",
+            "dresses",
+            "formal",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "thai",
+            "burritos",
+            "bbq"
+        ],
+        "similar_tags": [
+            "mexican",
+            "restaurant",
+            "burritos",
+            "bbq"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "indian",
+            "seafood",
+            "food",
+            "bbq"
+        ]
+    },
+    {
+        "query": [
+            "womenswear",
+            "curry",
+            "food",
+            "burritos",
+            "fine dining"
+        ],
+        "similar_tags": [
+            "thai",
+            "tacos",
+            "curry",
+            "food",
+            "fine dining"
+        ],
+        "negative_tags": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "menswear",
+            "thai"
+        ],
+        "similar_tags": [
+            "korean",
+            "dresses",
+            "thai",
+            "tacos",
+            "mexican"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "indian"
+        ],
+        "similar_tags": [
+            "curry",
+            "japanese",
+            "indian"
+        ],
+        "negative_tags": [
+            "curry",
+            "clothing",
+            "indian",
+            "womenswear"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "indian",
+            "spicy"
+        ],
+        "negative_tags": [
+            "tacos",
+            "shirts",
+            "indian",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "clothing",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "dresses",
+            "food",
+            "indian",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "dresses",
+            "food",
+            "clothing",
+            "formal",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ],
+        "similar_tags": [
+            "food",
+            "clothing",
+            "formal",
+            "spicy"
+        ],
+        "negative_tags": [
+            "korean",
+            "food",
+            "burritos",
+            "clothing"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "japanese",
+            "sushi"
+        ],
+        "similar_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ],
+        "negative_tags": [
+            "tacos",
+            "mexican",
+            "food",
+            "sushi",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "mexican",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "similar_tags": [
+            "shirts",
+            "food",
+            "clothing",
+            "bbq"
+        ],
+        "negative_tags": [
+            "mexican",
+            "food",
+            "clothing"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "fine dining",
+            "spicy"
+        ],
+        "similar_tags": [
+            "korean",
+            "food",
+            "bbq",
+            "spicy"
+        ],
+        "negative_tags": [
+            "korean",
+            "food",
+            "burritos",
+            "clothing"
+        ]
+    },
+    {
+        "query": [
+            "indian",
+            "sushi",
+            "thai"
+        ],
+        "similar_tags": [
+            "sushi",
+            "indian"
+        ],
+        "negative_tags": [
+            "tacos",
+            "shirts",
+            "fine dining",
+            "indian"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ],
+        "similar_tags": [
+            "thai",
+            "fine dining",
+            "indian",
+            "formal"
+        ],
+        "negative_tags": [
+            "indian",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "fine dining",
+            "burritos"
+        ],
+        "similar_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "menswear",
+            "indian",
+            "thai",
+            "spicy",
+            "formal"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "food",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "mexican",
+            "dresses",
+            "fine dining"
+        ],
+        "similar_tags": [
+            "korean",
+            "dresses",
+            "thai",
+            "tacos",
+            "mexican"
+        ],
+        "negative_tags": [
+            "korean",
+            "dresses",
+            "tacos",
+            "food",
+            "sushi"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "shirts",
+            "tacos"
+        ],
+        "similar_tags": [
+            "korean",
+            "shirts",
+            "clothing",
+            "indian"
+        ],
+        "negative_tags": [
+            "dresses",
+            "spicy",
+            "clothing",
+            "formal",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "curry",
+            "clothing",
+            "indian",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "restaurant",
+            "curry",
+            "clothing",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "womenswear",
+            "curry",
+            "food",
+            "burritos",
+            "fine dining"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "food",
+            "thai"
+        ],
+        "similar_tags": [
+            "curry",
+            "food",
+            "burritos",
+            "thai"
+        ],
+        "negative_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ]
+    },
+    {
+        "query": [
+            "japanese",
+            "clothing",
+            "sushi"
+        ],
+        "similar_tags": [
+            "curry",
+            "clothing",
+            "sushi",
+            "spicy"
+        ],
+        "negative_tags": [
+            "menswear",
+            "sushi",
+            "clothing",
+            "thai"
+        ]
+    },
+    {
+        "query": [
+            "formal",
+            "dresses",
+            "seafood"
+        ],
+        "similar_tags": [
+            "dresses",
+            "menswear",
+            "formal"
+        ],
+        "negative_tags": [
+            "shirts",
+            "menswear",
+            "clothing",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "clothing",
+            "spicy"
+        ],
+        "similar_tags": [
+            "curry",
+            "clothing",
+            "sushi",
+            "spicy"
+        ],
+        "negative_tags": [
+            "food",
+            "clothing",
+            "formal",
+            "spicy"
+        ]
+    },
+    {
+        "query": [
+            "bbq",
+            "sushi",
+            "indian"
+        ],
+        "similar_tags": [
+            "indian",
+            "sushi",
+            "thai"
+        ],
+        "negative_tags": [
+            "thai",
+            "fine dining",
+            "indian",
+            "formal"
+        ]
+    },
+    {
+        "query": [
+            "korean",
+            "food",
+            "burritos",
+            "clothing"
+        ],
+        "similar_tags": [
+            "korean",
+            "tacos",
+            "food",
+            "burritos",
+            "shirts"
+        ],
+        "negative_tags": [
+            "korean",
+            "shirts",
+            "fine dining",
+            "burritos"
+        ]
+    },
+    {
+        "query": [
+            "fine dining",
+            "menswear",
+            "womenswear"
+        ],
+        "similar_tags": [
+            "menswear",
+            "spicy",
+            "mexican",
+            "tacos",
+            "womenswear"
+        ],
+        "negative_tags": [
+            "restaurant",
+            "menswear",
+            "spicy",
+            "mexican",
+            "formal"
+        ]
+    }
+]

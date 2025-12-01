@@ -75,9 +75,9 @@ model.fit(
 print("Contrastive fine-tuning complete.")
 
 # ==========================================
-# 3. STAGE 2: TRAIN CLASSIFICATION HEAD
+# 3. STAGE 2: TRAIN CLASSIFICATION HEAD ONLY (Frozen Body)
 # ==========================================
-print("\n--- Stage 2: Training Classification Head ---")
+print("\n--- Stage 2: Training Classification Head (Body Frozen) ---")
 
 # Define a custom wrapper model that includes the SBERT body + Head
 class SentenceTransformerClassifier(nn.Module):
@@ -139,9 +139,15 @@ full_model = SentenceTransformerClassifier(model, num_classes).to(device)
 # Freeze the SBERT body (Standard SetFit / Transfer Learning procedure)
 for param in full_model.sbert.parameters():
     param.requires_grad = False
-
+    
+# Freeze the TransformerEncoder and Linear Classifier initially
+for param in full_model.transformer_layer.parameters():
+    param.requires_grad = True
+    
 # Optimizer & Loss for the Head only
-optimizer = torch.optim.Adam(full_model.classifier.parameters(), lr=1e-3)
+# Parameters to optimize: only the classifier's weights (Transformer Layer and Linear Layers)
+head_only_params = list(full_model.classifier.parameters()) + list(full_model.transformer_layer.parameters())
+optimizer_head = torch.optim.Adam(head_only_params, lr=1e-3)
 criterion = nn.CrossEntropyLoss()
 
 # Prepare simple batch loader for the strings
@@ -151,31 +157,34 @@ train_labels = torch.tensor(train_df['label'].tolist()).to(device)
 val_texts = val_df['question'].tolist()
 val_labels = torch.tensor(val_df['label'].tolist()).to(device)
 
-# Training Loop for the Head
-epochs = 5
+# Training Loop for the Head Only (3 epochs recommended for initialization)
+epochs_head_only = 3
 batch_size = 32
 
-for epoch in range(epochs):
+for epoch in range(epochs_head_only):
     epoch_loss = 0.0
     
-    # --- 1. Training Phase ---
+    # --- 1. Training Phase (Head Only) ---
     full_model.train()
     for i in range(0, len(train_texts), batch_size):
         batch_texts = train_texts[i : i + batch_size]
         batch_labels = train_labels[i : i + batch_size]
         
-        optimizer.zero_grad()
+        optimizer_head.zero_grad()
         logits = full_model(batch_texts)
         loss = criterion(logits, batch_labels)
         loss.backward()
-        optimizer.step()
         
-        # Accumulate loss item weighted by the number of samples in the batch
+        # Apply gradient clipping to the classifier parameters 
+        torch.nn.utils.clip_grad_norm_(head_only_params, max_norm=1.0)
+        
+        optimizer_head.step()
+        
         epoch_loss += loss.item() * len(batch_texts)
     
     avg_train_loss = epoch_loss / len(train_texts)
 
-    # --- 2. Validation Phase (Loss and Accuracy) ---
+    # --- 2. Validation Phase (Head Only) ---
     full_model.eval()
     val_epoch_loss = 0.0
     val_preds_for_epoch = []
@@ -189,24 +198,84 @@ for epoch in range(epochs):
             logits = full_model(batch_texts)
             loss = criterion(logits, batch_labels)
             
-            # Accumulate loss item weighted by the number of samples in the batch
             val_epoch_loss += loss.item() * len(batch_texts)
             
-            # Get predictions for epoch accuracy
             batch_preds = torch.argmax(logits, dim=1).cpu().numpy()
             val_preds_for_epoch.extend(batch_preds)
 
     avg_val_loss = val_epoch_loss / len(val_texts)
-    
-    # Calculate accuracy
     epoch_acc = accuracy_score(val_df['label'], val_preds_for_epoch)
     
-    # Report both Train and Validation metrics
-    print(f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f} | Val Acc: {epoch_acc:.4f}")
+    print(f"STAGE 2: Epoch {epoch+1}/{epochs_head_only} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f} | Val Acc: {epoch_acc:.4f}")
+
+# ==========================================
+# 4. STAGE 3: END-TO-END FINE-TUNING (Unfrozen Body)
+# ==========================================
+# Unfreeze the Sentence Transformer body for fine-tuning. This is critical 
+# for getting high accuracy on domain-specific tasks.
+print("\n--- Stage 3: End-to-End Fine-tuning (Unfrozen Body) ---")
+
+# 1. Unfreeze all parameters
+for param in full_model.parameters():
+    param.requires_grad = True
+
+# 2. Use a NEW optimizer with a VERY low learning rate (e.g., 5e-6) 
+# to prevent catastrophic forgetting in the SBERT body.
+epochs_full_finetune = 2
+low_lr = 5e-6 
+optimizer_full = torch.optim.AdamW(full_model.parameters(), lr=low_lr, weight_decay=0.01)
+
+# Training Loop for Full Fine-Tuning
+for epoch in range(epochs_full_finetune):
+    epoch_loss = 0.0
+    
+    # --- 1. Training Phase (Full Model) ---
+    full_model.train()
+    for i in range(0, len(train_texts), batch_size):
+        batch_texts = train_texts[i : i + batch_size]
+        batch_labels = train_labels[i : i + batch_size]
+        
+        optimizer_full.zero_grad()
+        logits = full_model(batch_texts)
+        loss = criterion(logits, batch_labels)
+        loss.backward()
+        
+        # Apply gradient clipping to ALL model parameters
+        torch.nn.utils.clip_grad_norm_(full_model.parameters(), max_norm=1.0)
+        
+        optimizer_full.step()
+        
+        epoch_loss += loss.item() * len(batch_texts)
+    
+    avg_train_loss = epoch_loss / len(train_texts)
+
+    # --- 2. Validation Phase (Full Model) ---
+    full_model.eval()
+    val_epoch_loss = 0.0
+    val_preds_for_epoch = []
+    
+    with torch.no_grad():
+        for i in range(0, len(val_texts), batch_size):
+            batch_texts = val_texts[i : i + batch_size]
+            batch_labels = val_labels[i : i + batch_size] 
+
+            # Forward pass
+            logits = full_model(batch_texts)
+            loss = criterion(logits, batch_labels)
+            
+            val_epoch_loss += loss.item() * len(batch_texts)
+            
+            batch_preds = torch.argmax(logits, dim=1).cpu().numpy()
+            val_preds_for_epoch.extend(batch_preds)
+
+    avg_val_loss = val_epoch_loss / len(val_texts)
+    epoch_acc = accuracy_score(val_df['label'], val_preds_for_epoch)
+    
+    print(f"STAGE 3: Epoch {epoch+1}/{epochs_full_finetune} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f} | Val Acc: {epoch_acc:.4f}")
 
 
 # ==========================================
-# 4. EVALUATION (Final Accuracy Report)
+# 5. EVALUATION (Final Accuracy Report)
 # ==========================================
 # This section remains to report the final performance based on the last model state.
 print("\n--- Final Evaluation ---")
@@ -228,10 +297,10 @@ with torch.no_grad():
 
 # Calculate accuracy
 acc = accuracy_score(val_df['label'], val_preds)
-print(f"Validation Accuracy: {acc:.4f}")
+print(f"Final Validation Accuracy: {acc:.4f}")
 
 # ==========================================
-# 5. SAVING THE MODEL
+# 6. SAVING THE MODEL
 # ==========================================
 save_path = "./my_manual_model"
 if not os.path.exists(save_path):
@@ -240,8 +309,12 @@ if not os.path.exists(save_path):
 # 1. Save the SentenceTransformer body (Standard format)
 full_model.sbert.save(os.path.join(save_path, "sbert_body"))
 
-# 2. Save the PyTorch Head
-torch.save(full_model.classifier.state_dict(), os.path.join(save_path, "head.pt"))
+# 2. Save the PyTorch Head: Save both the transformer layer and the linear layers
+head_state_dict = {
+    'transformer_layer': full_model.transformer_layer.state_dict(),
+    'classifier': full_model.classifier.state_dict(),
+}
+torch.save(head_state_dict, os.path.join(save_path, "head.pt"))
 
 # 3. Save the LabelEncoder (Crucial for prediction!)
 import pickle
@@ -252,7 +325,7 @@ print(f"\nModel saved to {save_path}")
 print("To inference, load sbert_body, load head.pt, and wrap them in the class.")
 
 # ==========================================
-# 6. INFERENCE EXAMPLE CODE
+# 7. INFERENCE EXAMPLE CODE
 # ==========================================
 print("\n--- Inference Example ---")
 # Re-load
@@ -261,7 +334,8 @@ loaded_head_state = torch.load(os.path.join(save_path, "head.pt"))
 
 # Re-init Wrapper
 inference_model = SentenceTransformerClassifier(loaded_sbert, num_classes)
-inference_model.classifier.load_state_dict(loaded_head_state)
+inference_model.transformer_layer.load_state_dict(loaded_head_state['transformer_layer'])
+inference_model.classifier.load_state_dict(loaded_head_state['classifier'])
 inference_model.to(device)
 inference_model.eval()
 

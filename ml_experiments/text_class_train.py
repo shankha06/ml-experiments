@@ -1,21 +1,34 @@
-import os
-
-import numpy as np
 import pandas as pd
+import numpy as np
 import torch
 import torch.nn as nn
-from sentence_transformers import InputExample, SentenceTransformer, losses, models, util
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
+from sentence_transformers import SentenceTransformer, InputExample, losses, models
+from sentence_transformers import util
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+import os
 
 # ==========================================
 # 1. SETUP & DATA PREPARATION
 # ==========================================
 
 # Dummy data generation (Replace with your actual data loading)
-df = pd.read_parquet("your_data.parquet")
+# df = pd.read_csv("your_data.csv")
+data = {
+    "question": [
+        "Where is the login page?", "How do I sign in?", 
+        "Show me my account settings", "Edit profile options",
+        "Where can I find the logout button?", "Exit the application"
+    ] * 50, 
+    "navigation": [
+        "Login_Page", "Login_Page",
+        "Settings_Page", "Settings_Page",
+        "Logout_Action", "Logout_Action"
+    ] * 50
+}
+df = pd.DataFrame(data)
 
 # Encode labels to integers (0 to 67)
 le = LabelEncoder()
@@ -123,10 +136,11 @@ val_labels = torch.tensor(val_df['label'].tolist()).to(device)
 epochs = 5
 batch_size = 32
 
-full_model.train()
 for epoch in range(epochs):
-    epoch_loss = 0
-    # Simple batching loop
+    epoch_loss = 0.0
+    
+    # --- 1. Training Phase ---
+    full_model.train()
     for i in range(0, len(train_texts), batch_size):
         batch_texts = train_texts[i : i + batch_size]
         batch_labels = train_labels[i : i + batch_size]
@@ -137,18 +151,50 @@ for epoch in range(epochs):
         loss.backward()
         optimizer.step()
         
-        epoch_loss += loss.item()
+        # Accumulate loss item weighted by the number of samples in the batch
+        epoch_loss += loss.item() * len(batch_texts)
     
-    print(f"Epoch {epoch+1}/{epochs} | Head Loss: {epoch_loss/len(train_texts):.5f}")
+    avg_train_loss = epoch_loss / len(train_texts)
+
+    # --- 2. Validation Phase (Loss and Accuracy) ---
+    full_model.eval()
+    val_epoch_loss = 0.0
+    val_preds_for_epoch = []
+    
+    with torch.no_grad():
+        for i in range(0, len(val_texts), batch_size):
+            batch_texts = val_texts[i : i + batch_size]
+            batch_labels = val_labels[i : i + batch_size] 
+
+            # Forward pass
+            logits = full_model(batch_texts)
+            loss = criterion(logits, batch_labels)
+            
+            # Accumulate loss item weighted by the number of samples in the batch
+            val_epoch_loss += loss.item() * len(batch_texts)
+            
+            # Get predictions for epoch accuracy
+            batch_preds = torch.argmax(logits, dim=1).cpu().numpy()
+            val_preds_for_epoch.extend(batch_preds)
+
+    avg_val_loss = val_epoch_loss / len(val_texts)
+    
+    # Calculate accuracy
+    epoch_acc = accuracy_score(val_df['label'], val_preds_for_epoch)
+    
+    # Report both Train and Validation metrics
+    print(f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f} | Val Acc: {epoch_acc:.4f}")
+
 
 # ==========================================
-# 4. EVALUATION (Fixed for OOM)
+# 4. EVALUATION (Final Accuracy Report)
 # ==========================================
-print("\n--- Evaluation ---")
+# This section remains to report the final performance based on the last model state.
+print("\n--- Final Evaluation ---")
 full_model.eval()
 
 val_preds = []
-batch_size = 32  # Use same batch size as training to prevent OOM
+batch_size = 32
 
 with torch.no_grad():
     for i in range(0, len(val_texts), batch_size):

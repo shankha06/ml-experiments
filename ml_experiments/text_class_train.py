@@ -86,7 +86,22 @@ class SentenceTransformerClassifier(nn.Module):
         self.sbert = sbert_model
         self.embedding_dim = sbert_model.get_sentence_embedding_dimension()
         
-        # The Classification Head
+        # --- MODIFICATION: Transformer Encoder Layer Head ---
+        # A single Transformer Encoder layer is used to process the sentence embedding
+        # before the final classification. We treat the embedding vector as a sequence
+        # of length 1 for this layer.
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=self.embedding_dim,      # Input/Output dimension
+            nhead=8,                         # Number of attention heads
+            dim_feedforward=2048,            # Dimension of the feedforward network model
+            batch_first=False,               # Expects (Seq, Batch, Embed)
+            dropout=0.1,
+            activation='relu'
+        )
+        # We use TransformerEncoder with num_layers=1 to hold the single layer
+        self.transformer_layer = nn.TransformerEncoder(encoder_layer, num_layers=1)
+        
+        # The final Classification Head maps the Transformer output to the number of classes
         self.classifier = nn.Sequential(
             nn.Linear(self.embedding_dim, 256),
             nn.ReLU(),
@@ -95,22 +110,26 @@ class SentenceTransformerClassifier(nn.Module):
         )
 
     def forward(self, input_texts):
-        # Get embeddings from SBERT
-        # We manually tokenize if we were doing raw pytorch, but sbert has encode()
-        # For training integration, we usually want gradients.
-        # However, for Stage 2, SetFit FREEZES the body. We will do the same.
-        
         # Get features using SBERT's internal tokenizer
         features = self.sbert.tokenize(input_texts)
         # Move to same device as model
         features = {k: v.to(self.sbert.device) for k, v in features.items()}
         
-        # Forward pass through SBERT
+        # Forward pass through SBERT to get sentence embeddings
         out_features = self.sbert(features)
-        embeddings = out_features['sentence_embedding']
+        embeddings = out_features['sentence_embedding'] # Shape: [batch_size, embedding_dim]
         
-        # Forward pass through Classifier
-        logits = self.classifier(embeddings)
+        # 1. Reshape for Transformer: [1, batch_size, embedding_dim]
+        embeddings_reshaped = embeddings.unsqueeze(0) 
+
+        # 2. Pass through Transformer Encoder (outputs [1, batch_size, embedding_dim])
+        transformer_output_seq = self.transformer_layer(embeddings_reshaped) 
+
+        # 3. Reshape back to [batch_size, embedding_dim]
+        transformer_output = transformer_output_seq.squeeze(0)
+        
+        # 4. Forward pass through final Classifier
+        logits = self.classifier(transformer_output)
         return logits
 
 # Initialize the combined model

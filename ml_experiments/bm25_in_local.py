@@ -1,5 +1,5 @@
 import bm25s
-import Stemmer  # Optional: For better results (requires PyStemmer)
+# import Stemmer  # Optional: For better results (requires PyStemmer)
 
 def index_corpus(corpus):
     """
@@ -13,14 +13,8 @@ def index_corpus(corpus):
     """
     print("--- Starting Indexing Process ---")
     
-    # 1. Create a stemmer (optional but recommended for better matches)
-    #    This reduces words to their root (e.g., "running" -> "run")
-    try:
-        stemmer = Stemmer.Stemmer("english")
-        print("Stemmer loaded successfully.")
-    except ImportError:
-        stemmer = None
-        print("PyStemmer not found. Proceeding without stemming.")
+    stemmer = None
+    print("PyStemmer not found. Proceeding without stemming.")
 
     # 2. Tokenize the corpus
     #    bm25s.tokenize handles lowercasing, stopwords, and stemming automatically

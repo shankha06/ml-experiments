@@ -142,14 +142,26 @@ for epoch in range(epochs):
     print(f"Epoch {epoch+1}/{epochs} | Head Loss: {epoch_loss/len(train_texts):.5f}")
 
 # ==========================================
-# 4. EVALUATION
+# 4. EVALUATION (Fixed for OOM)
 # ==========================================
 print("\n--- Evaluation ---")
 full_model.eval()
-with torch.no_grad():
-    val_logits = full_model(val_texts)
-    val_preds = torch.argmax(val_logits, dim=1).cpu().numpy()
 
+val_preds = []
+batch_size = 32  # Use same batch size as training to prevent OOM
+
+with torch.no_grad():
+    for i in range(0, len(val_texts), batch_size):
+        batch_texts = val_texts[i : i + batch_size]
+        
+        # Pass batch to model
+        logits = full_model(batch_texts)
+        
+        # Get predictions for this batch
+        batch_preds = torch.argmax(logits, dim=1).cpu().numpy()
+        val_preds.extend(batch_preds)
+
+# Calculate accuracy
 acc = accuracy_score(val_df['label'], val_preds)
 print(f"Validation Accuracy: {acc:.4f}")
 

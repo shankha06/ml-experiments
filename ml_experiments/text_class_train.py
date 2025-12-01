@@ -1,193 +1,198 @@
-# pip install sentence-transformers torch torchvision scikit-learn pandas
-
 import os
 
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from sentence_transformers import InputExample, SentenceTransformer, evaluation, util
-from sentence_transformers.losses import ContrastiveLoss, MultipleNegativesRankingLoss
-from sklearn.metrics import accuracy_score, classification_report
+from sentence_transformers import InputExample, SentenceTransformer, losses, models, util
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, Dataset
+from sklearn.preprocessing import LabelEncoder
+from torch.utils.data import DataLoader
 
-# -------------------------------
-# 1. Your Data (example)
-# -------------------------------
-df = pd.read_csv("your_data.csv")
+# ==========================================
+# 1. SETUP & DATA PREPARATION
+# ==========================================
 
-# Ensure class labels are 0 to 66
-df['class'] = pd.factorize(df['class'])[0]
-num_classes = df['class'].nunique()
-assert num_classes == 67, f"Expected 67 classes, got {num_classes}"
+# Dummy data generation (Replace with your actual data loading)
+df = pd.read_parquet("your_data.parquet")
 
-print(f"Classes: {num_classes}, Samples: {len(df)}")
+# Encode labels to integers (0 to 67)
+le = LabelEncoder()
+df["label"] = le.fit_transform(df["navigation"])
+num_classes = len(le.classes_)
+print(f"Dataset contains {len(df)} samples and {num_classes} classes.")
 
-# Train/validation split
-train_df, val_df = train_test_split(df, test_size=0.2, stratify=df['class'], random_state=42)
+# Split data
+train_df, val_df = train_test_split(df, test_size=0.2, random_state=42)
 
-# -------------------------------
-# 2. Custom Dataset that returns text + label
-# -------------------------------
-class TextLabelDataset(Dataset):
-    def __init__(self, texts, labels):
-        self.texts = texts
-        self.labels = labels
+# ==========================================
+# 2. STAGE 1: CONTRASTIVE FINE-TUNING
+# ==========================================
+# We use BatchHardTripletLoss. It works directly on (text, label) batches.
+# It makes the model learn that "login" texts are similar to each other 
+# and dissimilar to "logout" texts.
 
-    def __len__(self):
-        return len(self.texts)
+print("\n--- Stage 1: Contrastive Fine-tuning (SentenceTransformer) ---")
 
-    def __getitem__(self, idx):
-        return {
-            'text': self.texts[idx],
-            'label': torch.tensor(self.labels[idx], dtype=torch.long)
-        }
+# Load base model
+base_model_name = "sentence-transformers/paraphrase-mpnet-base-v2"
+model = SentenceTransformer(base_model_name)
 
-train_dataset = TextLabelDataset(train_df['text'].tolist(), train_df['class'].tolist())
-val_dataset   = TextLabelDataset(val_df['text'].tolist(),   val_df['class'].tolist())
+# Prepare data for SentenceTransformer
+# InputExample format: texts=[text], label=label_int
+train_examples = [
+    InputExample(texts=[row['question']], label=row['label']) 
+    for _, row in train_df.iterrows()
+]
+train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=32)
 
-batch_size = 32
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_loader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+# Define Contrastive Loss
+# BatchHardTripletLoss is excellent for classification data.
+train_loss = losses.BatchHardTripletLoss(model=model)
 
-# -------------------------------
-# 3. Model: SentenceTransformer + Classification Head
-# -------------------------------
-class SentenceTransformerWithHead(nn.Module):
-    def __init__(self, base_model_name='all-MiniLM-L6-v2', num_classes=67, fine_tune_encoder=True):
-        super().__init__()
-        self.encoder = SentenceTransformer(base_model_name)
-        self.embedding_dim = self.encoder.get_sentence_embedding_dimension()  # 384 for MiniLM
-        self.classifier = nn.Linear(self.embedding_dim, num_classes)
+# Train the body
+# 1 epoch is often enough for contrastive learning on simple datasets
+model.fit(
+    train_objectives=[(train_dataloader, train_loss)],
+    epochs=1,
+    show_progress_bar=True
+)
+
+print("Contrastive fine-tuning complete.")
+
+# ==========================================
+# 3. STAGE 2: TRAIN CLASSIFICATION HEAD
+# ==========================================
+print("\n--- Stage 2: Training Classification Head ---")
+
+# Define a custom wrapper model that includes the SBERT body + Head
+class SentenceTransformerClassifier(nn.Module):
+    def __init__(self, sbert_model, num_classes):
+        super(SentenceTransformerClassifier, self).__init__()
+        self.sbert = sbert_model
+        self.embedding_dim = sbert_model.get_sentence_embedding_dimension()
         
-        # Optionally freeze encoder (for pure head training)
-        if not fine_tune_encoder:
-            for param in self.encoder.parameters():
-                param.requires_grad = False
+        # The Classification Head
+        self.classifier = nn.Sequential(
+            nn.Linear(self.embedding_dim, 256),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(256, num_classes)
+        )
 
-    def forward(self, texts):
-        # texts: list of strings or already tokenized
-        embeddings = self.encoder.encode(texts, convert_to_tensor=True, show_progress_bar=False)
+    def forward(self, input_texts):
+        # Get embeddings from SBERT
+        # We manually tokenize if we were doing raw pytorch, but sbert has encode()
+        # For training integration, we usually want gradients.
+        # However, for Stage 2, SetFit FREEZES the body. We will do the same.
+        
+        # Get features using SBERT's internal tokenizer
+        features = self.sbert.tokenize(input_texts)
+        # Move to same device as model
+        features = {k: v.to(self.sbert.device) for k, v in features.items()}
+        
+        # Forward pass through SBERT
+        out_features = self.sbert(features)
+        embeddings = out_features['sentence_embedding']
+        
+        # Forward pass through Classifier
         logits = self.classifier(embeddings)
-        return logits, embeddings  # return both for dual loss
+        return logits
 
-    def encode(self, texts):
-        return self.encoder.encode(texts, convert_to_tensor=True, show_progress_bar=False)
-
-# Initialize model
+# Initialize the combined model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = SentenceTransformerWithHead(
-    base_model_name='all-MiniLM-L6-v2',
-    num_classes=67,
-    fine_tune_encoder=True  # Set False if you want frozen encoder
-).to(device)
+full_model = SentenceTransformerClassifier(model, num_classes).to(device)
 
-# -------------------------------
-# 4. Losses: Contrastive + Cross-Entropy
-# -------------------------------
-ce_loss_fn = nn.CrossEntropyLoss()
+# Freeze the SBERT body (Standard SetFit / Transfer Learning procedure)
+for param in full_model.sbert.parameters():
+    param.requires_grad = False
 
-# MultipleNegativesRankingLoss treats all samples with same label in batch as positives
-contrastive_loss_fn = MultipleNegativesRankingLoss(model=None)  # will use embeddings
+# Optimizer & Loss for the Head only
+optimizer = torch.optim.Adam(full_model.classifier.parameters(), lr=1e-3)
+criterion = nn.CrossEntropyLoss()
 
-# Hyperparameters
-contrastive_weight = 0.5   # Tune this: 0.1 to 1.0
-ce_weight = 1.0
+# Prepare simple batch loader for the strings
+train_texts = train_df['question'].tolist()
+train_labels = torch.tensor(train_df['label'].tolist()).to(device)
 
-optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
-num_epochs = 10
+val_texts = val_df['question'].tolist()
+val_labels = torch.tensor(val_df['label'].tolist()).to(device)
 
-# -------------------------------
-# 5. Training Loop with Dual Loss
-# -------------------------------
-best_acc = 0.0
+# Training Loop for the Head
+epochs = 5
+batch_size = 32
 
-for epoch in range(num_epochs):
-    model.train()
-    total_loss = 0
-
-    for batch in train_loader:
-        texts = batch['text']
-        labels = batch['label'].to(device)
-
+full_model.train()
+for epoch in range(epochs):
+    epoch_loss = 0
+    # Simple batching loop
+    for i in range(0, len(train_texts), batch_size):
+        batch_texts = train_texts[i : i + batch_size]
+        batch_labels = train_labels[i : i + batch_size]
+        
         optimizer.zero_grad()
-
-        logits, embeddings = model(texts)  # embeddings: (batch_size, dim)
-
-        # 1. Cross-entropy loss
-        ce_loss = ce_loss_fn(logits, labels)
-
-        # 2. Contrastive loss on embeddings (same class = positive)
-        # We create pairs: (embedding_i, embedding_j) where label_i == label_j
-        contrastive_loss = contrastive_loss_fn(embeddings, labels)
-
-        # Or use this stronger SupCon version (recommended):
-        # from sentence_transformers.losses import SupConLoss
-        # contrastive_loss = SupConLoss(model=None)(embeddings, labels)
-
-        loss = ce_weight * ce_loss + contrastive_weight * contrastive_loss
-
+        logits = full_model(batch_texts)
+        loss = criterion(logits, batch_labels)
         loss.backward()
         optimizer.step()
+        
+        epoch_loss += loss.item()
+    
+    print(f"Epoch {epoch+1}/{epochs} | Head Loss: {epoch_loss/len(train_texts):.5f}")
 
-        total_loss += loss.item()
-
-    # -------------------------------
-    # Validation
-    # -------------------------------
-    model.eval()
-    all_preds = []
-    all_labels = []
-
-    with torch.no_grad():
-        for batch in val_loader:
-            texts = batch['text']
-            labels = batch['label'].to(device)
-
-            logits, _ = model(texts)
-            preds = torch.argmax(logits, dim=1)
-            all_preds.extend(preds.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
-
-    acc = accuracy_score(all_labels, all_preds)
-    print(f"Epoch {epoch+1}/{num_epochs} | Loss: {total_loss/len(train_loader):.4f} | Val Acc: {acc:.4f}")
-
-    if acc > best_acc:
-        best_acc = acc
-        torch.save(model.state_dict(), "best_model_with_contrastive_head.pt")
-
-print(f"\nBest Validation Accuracy: {best_acc:.4f}")
-
-# -------------------------------
-# 6. Final Evaluation + Classification Report
-# -------------------------------
-model.load_state_dict(torch.load("best_model_with_contrastive_head.pt"))
-model.eval()
-
-val_texts = val_df['text'].tolist()
-val_labels = val_df['class'].tolist()
-
+# ==========================================
+# 4. EVALUATION
+# ==========================================
+print("\n--- Evaluation ---")
+full_model.eval()
 with torch.no_grad():
-    logits, _ = model(val_texts)
-    preds = torch.argmax(logits, dim=1).cpu().numpy()
+    val_logits = full_model(val_texts)
+    val_preds = torch.argmax(val_logits, dim=1).cpu().numpy()
 
-print("\n=== Final Classification Report ===")
-print(classification_report(val_labels, preds, digits=4))
+acc = accuracy_score(val_df['label'], val_preds)
+print(f"Validation Accuracy: {acc:.4f}")
 
-# -------------------------------
-# 7. Inference Example
-# -------------------------------
-def predict(texts):
-    model.eval()
-    with torch.no_grad():
-        logits, _ = model(texts)
-        probs = torch.softmax(logits, dim=1)
-        preds = torch.argmax(probs, dim=1)
-        return preds.cpu().numpy(), probs.cpu().numpy()
+# ==========================================
+# 5. SAVING THE MODEL
+# ==========================================
+save_path = "./my_manual_model"
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
 
-new_texts = ["This is an amazing product!", "Terrible service, never again."]
-preds, probs = predict(new_texts)
+# 1. Save the SentenceTransformer body (Standard format)
+full_model.sbert.save(os.path.join(save_path, "sbert_body"))
 
-for t, p, prob in zip(new_texts, preds, probs):
-    print(f"Text: {t}")
-    print(f"Predicted class: {p}, Confidence: {prob[p]:.3f}")
+# 2. Save the PyTorch Head
+torch.save(full_model.classifier.state_dict(), os.path.join(save_path, "head.pt"))
+
+# 3. Save the LabelEncoder (Crucial for prediction!)
+import pickle
+with open(os.path.join(save_path, "label_encoder.pkl"), "wb") as f:
+    pickle.dump(le, f)
+
+print(f"\nModel saved to {save_path}")
+print("To inference, load sbert_body, load head.pt, and wrap them in the class.")
+
+# ==========================================
+# 6. INFERENCE EXAMPLE CODE
+# ==========================================
+print("\n--- Inference Example ---")
+# Re-load
+loaded_sbert = SentenceTransformer(os.path.join(save_path, "sbert_body"))
+loaded_head_state = torch.load(os.path.join(save_path, "head.pt"))
+
+# Re-init Wrapper
+inference_model = SentenceTransformerClassifier(loaded_sbert, num_classes)
+inference_model.classifier.load_state_dict(loaded_head_state)
+inference_model.to(device)
+inference_model.eval()
+
+# Predict
+test_query = "How do I sign out?"
+with torch.no_grad():
+    logits = inference_model([test_query])
+    pred_id = torch.argmax(logits, dim=1).item()
+    pred_label = le.inverse_transform([pred_id])[0]
+
+print(f"Query: '{test_query}' -> Predicted: {pred_label}")

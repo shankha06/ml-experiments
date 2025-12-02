@@ -12,6 +12,68 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader, Sampler
 
+def create_triplets(df: pd.DataFrame, num_positives: int = 5, num_negatives: int = 20) -> list[dict]:
+    """
+    Creates a dataset of triplets (anchor, positives, negatives).
+
+    Args:
+        df: DataFrame with 'question' and 'navigation' columns.
+        num_positives: Number of positive samples per anchor.
+        num_negatives: Number of negative samples per anchor.
+
+    Returns:
+        A list of dictionaries, where each dictionary contains an 'anchor',
+        a list of 'positives', and a list of 'negatives'.
+    """
+    dataset = []
+    grouped_by_nav = df.groupby('navigation')['question'].apply(list)
+    nav_classes = list(grouped_by_nav.index)
+    all_questions_flat = df['question'].tolist()
+
+    if len(nav_classes) < 2:
+        raise ValueError("Need at least two distinct navigation classes to create negatives.")
+
+    for nav_class, questions_in_class in grouped_by_nav.items():
+        # Define the pool of potential positive and negative samples for this class
+        
+        # Positives must come from the same class, excluding the anchor itself.
+        # Negatives are all questions NOT in the current class.
+        negative_pool = [q for q in all_questions_flat if q not in questions_in_class]
+
+        if len(questions_in_class) <= num_positives:
+            print(f"Warning: Class '{nav_class}' has {len(questions_in_class)} samples, which is not more than the required {num_positives} positives. Some positives will be repeated.")
+        
+        if len(negative_pool) < num_negatives:
+             print(f"Warning: Total negative samples available ({len(negative_pool)}) is less than num_negatives ({num_negatives}). Sampling with replacement.")
+
+        for anchor_question in questions_in_class:
+            # Sample positives
+            # Candidates are all questions in the same class, except for the anchor
+            positive_candidates = [q for q in questions_in_class if q != anchor_question]
+            if not positive_candidates: # If only one sample in the class
+                positive_candidates = questions_in_class # Sample from the single item list
+
+            # Sample with replacement if not enough candidates
+            if len(positive_candidates) < num_positives:
+                positives = random.choices(positive_candidates, k=num_positives)
+            else:
+                positives = random.sample(positive_candidates, num_positives)
+
+            # Sample negatives
+            # Sample with replacement if not enough candidates
+            if len(negative_pool) < num_negatives:
+                negatives = random.choices(negative_pool, k=num_negatives)
+            else:
+                negatives = random.sample(negative_pool, num_negatives)
+
+            dataset.append({
+                'anchor': anchor_question,
+                'positives': positives,
+                'negatives': negatives
+            })
+            
+    return dataset
+
 # ==========================================
 # 1. SETUP & DATA PREPARATION
 # ==========================================
@@ -32,6 +94,17 @@ data = {
 }
 df = pd.DataFrame(data)
 
+# Create the triplet dataset and print one example
+triplet_dataset = create_triplets(df, num_positives=5, num_negatives=20)
+if triplet_dataset:
+    print("\n--- Example Triplet ---")
+    print(f"Total triplets created: {len(triplet_dataset)}")
+    example = triplet_dataset[0]
+    print(f"Anchor: {example['anchor']}")
+    print(f"Positives ({len(example['positives'])}): {example['positives']}")
+    print(f"Negatives ({len(example['negatives'])}): {example['negatives']}")
+    print("-----------------------\n")
+
 # Encode labels to integers (0 to 67)
 le = LabelEncoder()
 df["label"] = le.fit_transform(df["navigation"])
@@ -40,55 +113,6 @@ print(f"Dataset contains {len(df)} samples and {num_classes} classes.")
 
 # Split data
 train_df, val_df = train_test_split(df, test_size=0.2, random_state=42)
-
-# --- CUSTOM SAMPLER FOR UNIQUE IN-BATCH NEGATIVES ---
-class UniqueLabelBatchSampler(Sampler):
-    """
-    A sampler that yields batches ensuring every sample in the batch
-    comes from a different class (label).
-    """
-    def __init__(self, labels, batch_size):
-        self.labels = np.array(labels)
-        self.batch_size = batch_size
-        self.unique_classes = np.unique(self.labels)
-        
-        # Ensure batch size doesn't exceed number of classes
-        if self.batch_size > len(self.unique_classes):
-            print(f"Warning: Batch size ({self.batch_size}) > Classes ({len(self.unique_classes)}). Adjusting batch size to {len(self.unique_classes)}.")
-            self.batch_size = len(self.unique_classes)
-
-    def __iter__(self):
-        # 1. Organize indices by class
-        class_indices = defaultdict(list)
-        for idx, label in enumerate(self.labels):
-            class_indices[label].append(idx)
-        
-        # 2. Shuffle indices within each class
-        for label in class_indices:
-            random.shuffle(class_indices[label])
-            
-        # 3. Create batches
-        # We continue as long as we have enough classes with data left to fill a batch
-        while True:
-            # Get list of classes that still have samples
-            available_classes = [k for k, v in class_indices.items() if len(v) > 0]
-            
-            if len(available_classes) < self.batch_size:
-                break # Not enough unique classes left to fill a full batch
-            
-            # Randomly pick 'batch_size' distinct classes
-            selected_classes = random.sample(available_classes, self.batch_size)
-            
-            batch_indices = []
-            for cls in selected_classes:
-                # Pop one index from this class
-                batch_indices.append(class_indices[cls].pop())
-            
-            yield batch_indices
-
-    def __len__(self):
-        # Approx length (not critical for training loop but good for progress bars)
-        return len(self.labels) // self.batch_size
 
 # ==========================================
 # 2. STAGE 1: CONTRASTIVE FINE-TUNING (MNRL)
@@ -107,12 +131,6 @@ train_examples = [
     for _, row in train_df.iterrows()
 ]
 
-# 2. Instantiate Custom Sampler
-# We extract the label IDs to help the sampler organize the batches
-train_labels = [ex.label for ex in train_examples]
-batch_size = 4 # Kept small for this dummy data. In real-world, try 16, 32, etc.
-
-sampler = UniqueLabelBatchSampler(train_labels, batch_size=batch_size)
 
 # 3. Create DataLoader with the Custom BatchSampler
 # Note: when using batch_sampler, we do NOT use batch_size or shuffle in DataLoader

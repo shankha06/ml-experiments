@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import torch
 from datasets import load_dataset
 from sentence_transformers import (
     SentenceTransformer,
@@ -18,14 +19,28 @@ def main():
     parser.add_argument("--batch_size", type=int, default=32, help="Per device train batch size")
     parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=2e-5, help="Learning rate")
+    parser.add_argument("--gradient_accumulation_steps", type=int, default=1, help="Number of updates steps to accumulate before performing a backward/update pass")
     
+    # DDP Setup
+    local_rank = int(os.environ.get("LOCAL_RANK", -1))
+    if local_rank != -1:
+        torch.cuda.set_device(local_rank)
+        device = torch.device("cuda", local_rank)
+    else:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Helper for logging
+    def log(msg):
+        if local_rank in [-1, 0]:
+            print(msg)
+
     # Parse args (and handle known args if needed, but simple parse_args is fine)
     args, unknown = parser.parse_known_args()
     
-    print(f"Training params: {args}")
+    log(f"Training params: {args}")
 
     # Load dataset
-    print(f"Loading dataset from {args.input}...")
+    log(f"Loading dataset from {args.input}...")
     dataset = load_dataset("parquet", data_files=args.input, split="train")
 
     # Preprocessing function to format examples for MNRL
@@ -139,7 +154,7 @@ def main():
             # If absolutely no negatives (unlikely from prep script), use positive?
             # Ideally shouldn't happen if filtered.
             return positive 
-
+        
         # Return flat
         return {
             "sentence_0": anchor,
@@ -152,11 +167,11 @@ def main():
         }
 
     train_dataset = dataset.map(robust_transform, remove_columns=dataset.column_names)
-    print(f"Dataset columns: {train_dataset.column_names}")
+    log(f"Dataset columns: {train_dataset.column_names}")
 
     # Load Model
-    print(f"Loading model {args.model_name}...")
-    model = SentenceTransformer(args.model_name)
+    log(f"Loading model {args.model_name} on {device}...")
+    model = SentenceTransformer(args.model_name, device=device)
 
     # Loss
     # MNRL expects (a, p, n1, n2...)
@@ -168,6 +183,7 @@ def main():
         output_dir=args.output,
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps, # Pass gradient accumulation
         learning_rate=args.lr,
         warmup_ratio=0.1,
         fp16=False,  # Enable mixed precision
@@ -188,12 +204,12 @@ def main():
         loss=train_loss,
     )
 
-    print("Starting training...")
+    log("Starting training...")
     trainer.train()
     
-    print("Saving model...")
+    log("Saving model...")
     trainer.save_model(os.path.join(args.output, "final"))
-    print("Done.")
+    log("Done.")
 
 if __name__ == "__main__":
     main()

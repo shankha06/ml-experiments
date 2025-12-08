@@ -1,215 +1,321 @@
-import argparse
 import os
-import sys
+import argparse
+import logging
 import torch
-from datasets import load_dataset
-from sentence_transformers import (
-    SentenceTransformer,
-    SentenceTransformerTrainer,
-    SentenceTransformerTrainingArguments,
-    losses,
-)
-from sentence_transformers.training_args import BatchSamplers
+import torch.distributed as dist
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset
+from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
+from transformers import AutoModel, AutoTokenizer, get_linear_schedule_with_warmup
+import pandas as pd
+from tqdm import tqdm
+import numpy as np
+import math
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+def setup_ddp():
+    """Initialize Distributed Data Parallel"""
+    if "RANK" in os.environ and "WORLD_SIZE" in os.environ:
+        dist.init_process_group(backend="nccl")
+        rank = int(os.environ["RANK"])
+        local_rank = int(os.environ["LOCAL_RANK"])
+        world_size = int(os.environ["WORLD_SIZE"])
+        torch.cuda.set_device(local_rank)
+        device = torch.device(f"cuda:{local_rank}")
+    else:
+        # Fallback for single GPU/CPU debugging
+        rank = 0
+        local_rank = 0
+        world_size = 1
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        logger.warning("Not running in DDP mode. Using single device.")
+    
+    return device, rank, local_rank, world_size
+
+def cleanup_ddp():
+    if dist.is_initialized():
+        dist.destroy_process_group()
+
+class MNRLDataset(Dataset):
+    def __init__(self, parquet_path, tokenizer, max_length=512, num_negatives=5):
+        self.data = pd.read_parquet(parquet_path)
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+        self.num_negatives = num_negatives
+        self.bge_query_prefix = "Represent this sentence for searching relevant passages: "
+        
+        # Simple validation
+        if 'anchor' not in self.data.columns or 'positive' not in self.data.columns:
+            raise ValueError("Dataset must contain 'anchor' and 'positive' columns")
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        row = self.data.iloc[idx]
+        
+        anchor_text = self.bge_query_prefix + row['anchor']
+        positive_text = row['positive']
+        
+        # Handle negatives
+        negatives = row['negatives'] if 'negatives' in row and isinstance(row['negatives'], (list, np.ndarray)) else []
+        
+        if isinstance(negatives, np.ndarray):
+            negatives = negatives.tolist()
+        
+        # Pad or truncate negatives to fixed size
+        if len(negatives) < self.num_negatives:
+            # Cycle negatives if not enough, or use positive if completely empty (shouldn't happen with filtered data)
+            if len(negatives) > 0:
+                negatives = negatives * math.ceil(self.num_negatives / len(negatives))
+                negatives = negatives[:self.num_negatives]
+            else:
+                negatives = [positive_text] * self.num_negatives # Fallback
+                
+        elif len(negatives) > self.num_negatives:
+            negatives = negatives[:self.num_negatives]
+            
+            
+        return {
+            'anchor': anchor_text,
+            'positive': positive_text,
+            'negatives': negatives # List of strings
+        }
+
+def collate_fn(batch, tokenizer, max_length, device):
+    """
+    Tokenizes and prepares batch.
+    Returns tensors on CPU; move to GPU in loop to avoid multiprocessing CUDA fork issues if num_workers > 0.
+    """
+    anchors = [b['anchor'] for b in batch]
+    positives = [b['positive'] for b in batch]
+    negatives_list = [b['negatives'] for b in batch] # List of Lists
+    
+    # Flatten negatives for tokenization: [batch_size * num_negatives]
+    flat_negatives = [n for negs in negatives_list for n in negs]
+    
+    # Check num_negatives consistency per batch (should be fixed by Dataset)
+    num_negatives = len(negatives_list[0]) 
+
+    # Tokenize
+    def tokenize(texts):
+        return tokenizer(
+            texts, 
+            padding=True, 
+            truncation=True, 
+            max_length=max_length, 
+            return_tensors="pt"
+        )
+    
+    anchor_tok = tokenize(anchors)
+    positive_tok = tokenize(positives)
+    # Tokenize all negatives at once is usually more efficient if batch size strictly controlled
+    # If OOM, might need to chunk? With batch_size ~48 and 5 negs, it's like batch 300. Fits on A10G.
+    negative_tok = tokenize(flat_negatives)
+    
+    return {
+        'anchor': anchor_tok,
+        'positive': positive_tok,
+        'negatives': negative_tok, # Flat tokenized
+        'num_negatives': num_negatives
+    }
+
+class EncoderModel(nn.Module):
+    def __init__(self, model_name):
+        super().__init__()
+        self.model = AutoModel.from_pretrained(model_name)
+        
+        # Enable gradient checkpointing if memory is tight
+        self.model.gradient_checkpointing_enable() 
+
+    def forward(self, input_ids, attention_mask):
+        output = self.model(input_ids=input_ids, attention_mask=attention_mask)
+        # BGE uses [CLS] token embedding
+        return output.last_hidden_state[:, 0]
+
+def compute_mnrl_loss(anchor_emb, positive_emb, negative_emb, num_negatives, temperature=0.02):
+    """
+    Args:
+        anchor_emb: [B, D]
+        positive_emb: [B, D]
+        negative_emb: [B * K, D] (Flat negatives)
+        num_negatives: K
+        
+    Multiple Negatives Ranking Loss:
+    - In-batch negatives: The positive of other samples are negatives.
+    - Hard negatives: Explicit negatives provided.
+    
+    Standard MNRL creates a big candidate list.
+    Scores = Anchor @ Candidates.T
+    Candidates = [Positives, Negatives]
+    """
+    batch_size = anchor_emb.size(0)
+    
+    # Reshape negatives to [B, K, D]
+    negative_emb = negative_emb.view(batch_size, num_negatives, -1)
+    
+    # Targets: The positive for anchor i is at index i in the candidates
+    # We want to maximize sim(a_i, p_i) and minimize sim(a_i, others)
+    
+    # 1. Similarity with Positives (Batch x Batch)
+    # scores_pos[i][j] = sim(anchor_i, positive_j)
+    # We want diagonal to be high. Off-diagonal are "easy" negatives (in-batch).
+    sim_pos = torch.matmul(anchor_emb, positive_emb.transpose(0, 1)) / temperature # [B, B]
+    
+    # 2. Similarity with Hard Negatives
+    # We need to flatten negatives again to [B*K, D] effectively for matrix mul, OR:
+    # We want sim(anchor_i, neg_i_k).
+    # But usually MNRL treats ALL negatives as candidates? 
+    # Standard implementation: Candidates = [P_0, ..., P_B, N_0_0, ..., N_B_K]
+    # This creates a massive (B) x (B + B*K) matrix.
+    
+    flat_negatives = negative_emb.reshape(-1, anchor_emb.size(1)) # [B*K, D]
+    sim_neg = torch.matmul(anchor_emb, flat_negatives.transpose(0, 1)) / temperature # [B, B*K]
+    
+    # Concatenate scores
+    # Final Scores: [B, B + B*K]
+    scores = torch.cat([sim_pos, sim_neg], dim=1)
+    
+    # Target is 0, 1, 2... B-1 (the index of the positive in the first B columns)
+    labels = torch.arange(batch_size, device=anchor_emb.device)
+    
+    loss = nn.CrossEntropyLoss()(scores, labels)
+    return loss
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, required=True, help="Path to input parquet file")
-    parser.add_argument("--output", type=str, required=True, help="Path to output model directory")
-    parser.add_argument("--model_name", type=str, default="BAAI/bge-base-en-v1.5", help="Base model name")
-    parser.add_argument("--batch_size", type=int, default=32, help="Per device train batch size")
-    parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs")
-    parser.add_argument("--lr", type=float, default=2e-5, help="Learning rate")
-    parser.add_argument("--gradient_accumulation_steps", type=int, default=1, help="Number of updates steps to accumulate before performing a backward/update pass")
-    
-    # DDP Setup
-    local_rank = int(os.environ.get("LOCAL_RANK", -1))
-    if local_rank != -1:
-        torch.cuda.set_device(local_rank)
-        device = torch.device("cuda", local_rank)
-    else:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+    parser.add_argument("--input", type=str, required=True, help="Path to training data")
+    parser.add_argument("--output", type=str, required=True, help="Output directory")
+    parser.add_argument("--model_name", type=str, default="BAAI/bge-base-en-v1.5")
+    parser.add_argument("--epochs", type=int, default=3)
+    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--lr", type=float, default=2e-5)
+    parser.add_argument("--accumulation_steps", type=int, default=1)
+    parser.add_argument("--num_negatives", type=int, default=5)
+    parser.add_argument("--save_steps", type=int, default=500)
+    args = parser.parse_args()
 
-    # Helper for logging
-    def log(msg):
-        if local_rank in [-1, 0]:
-            print(msg)
+    device, rank, local_rank, world_size = setup_ddp()
+    
+    if rank == 0:
+        if not os.path.exists(args.output):
+            os.makedirs(args.output)
+        logger.info(f"Arguments: {args}")
 
-    # Parse args (and handle known args if needed, but simple parse_args is fine)
-    args, unknown = parser.parse_known_args()
+    # Tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     
-    log(f"Training params: {args}")
-
-    # Load dataset
-    log(f"Loading dataset from {args.input}...")
-    dataset = load_dataset("parquet", data_files=args.input, split="train")
-
-    # Preprocessing function to format examples for MNRL
-    # MNRL expects InputExamples or a formatted list. 
-    # With SentenceTransformerTrainer (v3), we can pass a dictionary or mapped dataset.
-    # The columns should be ["anchor", "positive", "negative_1", "negative_2", ...] or just a list column?
-    # Actually, the trainer handles dataset columns mapping.
-    # If the collator sees multiple columns, it treats them as (input1, input2, ...).
-    # We have 'anchor', 'positive', 'negatives' (list).
-    # We need to flatten 'negatives' so we have 'negative_0', 'negative_1' etc columns OR 
-    # convert to a single column containing the list?
-    # Standard way in v3 is usually a list of texts column or multiple text columns.
-    # Documentation says: "If the dataset contains multiple columns, the columns are assumed to be (sentence_1, sentence_2, ...)".
-    # So we need to flatten the list of negatives into separate columns?
-    # Or cleaner: map to a single "text" column which is a list [anchor, pos, neg1, neg2...]? No, that's not standard HF format.
-    # Let's flatten to columns: anchor, positive, negative_0, negative_1...
+    # Dataset & Dataloader
+    dataset = MNRLDataset(args.input, tokenizer, num_negatives=args.num_negatives)
+    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=True)
     
-    # Check max negatives
-    def get_max_negatives(example):
-        return len(example['negatives'])
-    
-    # We assume variable negatives are allowed, but for batching usually fixed is better or handled by collator.
-    # Let's try to flatten dynamically or just fix a number.
-    # safe approach: flatten to a list feature "text_list" = [anchor, pos, *negatives]
-    # Check if SBERT trainer supports single column of list of strings.
-    # Yes, if we look at `CoSENTLoss` or others, but `MultipleNegativesRankingLoss` takes [(a, p, n...), ...].
-    # Let's transform to "return {'samples': [anchor, pos, *negatives]}"? No.
-    
-    # Let's try to dynamic flatten to columns.
-    # Actually, SBERT V3 Trainer uses the dataset columns. If columns are ["a", "b", "c"], it passes corresponding inputs.
-    # Problem: Variable number of negatives.
-    # Valid solution: Truncate/Pad to fixed number of negatives or use specific collator.
-    # Let's implement a transform to fixed columns: anchor, positive, neg_0, neg_1... up to min(len(negatives)) or fill with empty?
-    # "MultipleNegativesRankingLoss" can handle variable inputs if the batch is collated correctly, but standard collator might struggle with missing keys?
-    # Simpler approach: Just take top-k negatives and make them columns. 
-    # Or, verify if we can pass a list.
-    # Let's go with Flatten strategy:
-    # 1. Add "BGE Instruction" to anchor.
-    # 2. Flatten: columns "sentence_0" (anchor), "sentence_1" (positive), "sentence_2" (neg0)...
-    
-    BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
-    
-    def transform_data(example):
-        # Add prefix
-        anchor = BGE_QUERY_PREFIX + example['anchor']
-        positive = example['positive']
-        negs = example['negatives']
-        
-        # We need a consistent schema for HF datasets.
-        # We should probably return a dict with numbered keys?
-        # A clearer way is to return a SINGLE column 'text' which is a List[str].
-        # SBERT Dataset processing checks for 'sentence_0', 'sentence_1' OR a single column in some cases.
-        # However, for MNRL, `sentence-transformers` < 3 used `InputExample(texts=[...])`.
-        # V3 trainer: "If the dataset columns are not found in the loss, all columns are passed to the model".
-        # Let's try returning a dict with keys 'sentence_0', 'sentence_1', ...
-        # But schemas must optionally match.
-        # Let's assume max 5 negatives as per prep script.
-        
-        result = {
-            "sentence_0": anchor,
-            "sentence_1": positive
-        }
-        for i, neg in enumerate(negs):
-            result[f"sentence_{i+2}"] = neg
-        return result
-
-    # Apply transform
-    # Note: map requires the output schema to be consistent/known or we drop old columns.
-    # If rows have different neg counts, 'sentence_x' will be missing for some. HF Datasets will pad with None?
-    # Better to force specific columns and pad with empty string or None?
-    # MNRL ignores None/Empty if handled? No.
-    # Safer: take exactly 5 negatives (pad if needed? or truncate).
-    # Since we mined hard negatives, some might have < 5.
-    # Let's just fix to using the available ones and hope the collator handles Nones?
-    # Actually, if we use `remove_columns`, we need to be careful.
-    
-    # ALTERNATIVE: Use the classic `InputExample` flow wrapped in a custom dataset if V3 is tricky with variable cols.
-    # But V3 Trainer is preferred.
-    # Let's standardise to top-1 hard negative? No, we want multiple.
-    # Let's try the list approach: "return {'text': [anchor, pos, *negs]}"
-    # If the column is named "text" (or whatever), does the trainer unpack it?
-    # Let's check `SentenceTransformerTrainer` source is complex.
-    
-    # Conservative safe bet for script:
-    # Just take 1 hard negative to be safe with standard triplet loss if variable length is a risk?
-    # But user asked for MNRL on this data.
-    # Let's just try to flatten to max 5 negatives (pad with empty string - SBERT might embed empty string, which is bad).
-    # Actually, let's just use 'anchor', 'positive', 'negatives' columns and let the user decide?
-    # No, I must write working code.
-    
-    # Let's use the `return_loss` feature of MNRL?
-    # Let's accept that we flatten to specific columns and just pad with `positive` (duplicate positive as negative? No)
-    # Pad with random? 
-    # Let's just take the first hard negative for simplicity if we want to guarantee success, 
-    # BUT user has 5 negatives.
-    # Let's go with: map to `[anchor, pos, n1, n2, n3, n4, n5]`. If nX missing, reuse n(X-1) or pos?
-    # Reuse n(last) is safer than empty.
-    
-    def robust_transform(example):
-        anchor = BGE_QUERY_PREFIX + example['anchor']
-        positive = example['positive']
-        negs = example['negatives']
-        
-        # Helper to get negative or fallback
-        def get_neg(i):
-            if i < len(negs):
-                return negs[i]
-            # Fallback: cycle negatives?
-            if len(negs) > 0:
-                return negs[i % len(negs)]
-            # If absolutely no negatives (unlikely from prep script), use positive?
-            # Ideally shouldn't happen if filtered.
-            return positive 
-        
-        # Return flat
-        return {
-            "sentence_0": anchor,
-            "sentence_1": positive,
-            "sentence_2": get_neg(0),
-            "sentence_3": get_neg(1),
-            "sentence_4": get_neg(2),
-            "sentence_5": get_neg(3),
-            "sentence_6": get_neg(4),
-        }
-
-    train_dataset = dataset.map(robust_transform, remove_columns=dataset.column_names)
-    log(f"Dataset columns: {train_dataset.column_names}")
-
-    # Load Model
-    log(f"Loading model {args.model_name} on {device}...")
-    model = SentenceTransformer(args.model_name, device=device)
-
-    # Loss
-    # MNRL expects (a, p, n1, n2...)
-    # "MultipleNegativesRankingLoss"
-    train_loss = losses.MultipleNegativesRankingLoss(model=model)
-
-    # Arguments
-    training_args = SentenceTransformerTrainingArguments(
-        output_dir=args.output,
-        num_train_epochs=args.epochs,
-        per_device_train_batch_size=args.batch_size,
-        gradient_accumulation_steps=args.gradient_accumulation_steps, # Pass gradient accumulation
-        learning_rate=args.lr,
-        warmup_ratio=0.1,
-        fp16=False,  # Enable mixed precision
-        bf16=True, # Use bf16 if typically A100/H100, but safer False for generic
-        evaluation_strategy="no", # or "steps"
-        save_strategy="epoch",
-        logging_steps=1000,
-        run_name="mnrl-bge",
-        # DDP specific
-        ddp_find_unused_parameters=False,
+    dataloader = DataLoader(
+        dataset,
+        batch_size=args.batch_size,
+        sampler=sampler,
+        num_workers=4,
+        pin_memory=True,
+        collate_fn=lambda x: collate_fn(x, tokenizer, 512, device)
     )
 
-    # Trainer
-    trainer = SentenceTransformerTrainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset,
-        loss=train_loss,
-    )
-
-    log("Starting training...")
-    trainer.train()
+    # Model
+    model = EncoderModel(args.model_name)
+    model.to(device)
     
-    log("Saving model...")
-    trainer.save_model(os.path.join(args.output, "final"))
-    log("Done.")
+    # Wrap DDP
+    if dist.is_initialized():
+        model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+    
+    # Optimizer
+    optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+    
+    # Scheduler
+    num_training_steps = len(dataloader) * args.epochs // args.accumulation_steps
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer, 
+        num_warmup_steps=int(0.1 * num_training_steps), 
+        num_training_steps=num_training_steps
+    )
+    
+    start_epoch = 0
+    global_step = 0
+    
+    # Training Loop
+    if rank == 0:
+        logger.info("Starting training...")
+    
+    model.train()
+    
+    for epoch in range(start_epoch, args.epochs):
+        sampler.set_epoch(epoch)
+        if rank == 0:
+            logger.info(f"Epoch {epoch+1}/{args.epochs}")
+        
+        epoch_iterator = tqdm(dataloader, disable=(rank != 0))
+        
+        for step, batch in enumerate(epoch_iterator):
+            # Move to device
+            anchor_inputs = {k: v.to(device) for k, v in batch['anchor'].items()}
+            positive_inputs = {k: v.to(device) for k, v in batch['positive'].items()}
+            negative_inputs = {k: v.to(device) for k, v in batch['negatives'].items()}
+            
+            # Forward
+            # Enable autocast for bf16
+            with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
+                anchor_emb = model(anchor_inputs['input_ids'], anchor_inputs['attention_mask'])
+                positive_emb = model(positive_inputs['input_ids'], positive_inputs['attention_mask'])
+                negative_emb = model(negative_inputs['input_ids'], negative_inputs['attention_mask'])
+                
+                # Normalize embeddings for cosine similarity
+                anchor_emb = torch.nn.functional.normalize(anchor_emb, p=2, dim=1)
+                positive_emb = torch.nn.functional.normalize(positive_emb, p=2, dim=1)
+                negative_emb = torch.nn.functional.normalize(negative_emb, p=2, dim=1)
+                
+                loss = compute_mnrl_loss(anchor_emb, positive_emb, negative_emb, batch['num_negatives'])
+                loss = loss / args.accumulation_steps
+
+            # Backward
+            loss.backward()
+            
+            if (step + 1) % args.accumulation_steps == 0:
+                # Clip gradients
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                
+                optimizer.step()
+                scheduler.step()
+                optimizer.zero_grad()
+                global_step += 1
+                
+                if rank == 0 and global_step % 100 == 0:
+                    # Sync loss for logging? Or just log local for speed
+                    # Simple local log usually enough to sanity check
+                    epoch_iterator.set_description(f"Loss: {loss.item() * args.accumulation_steps:.4f}")
+                
+                # Save checkpoint
+                if rank == 0 and global_step % args.save_steps == 0:
+                    save_path = os.path.join(args.output, f"checkpoint-{global_step}")
+                    os.makedirs(save_path, exist_ok=True)
+                    
+                    unwrapped_model = model.module if hasattr(model, "module") else model
+                    unwrapped_model.model.save_pretrained(save_path)
+                    tokenizer.save_pretrained(save_path)
+                    logger.info(f"Saved checkpoint to {save_path}")
+
+    # Final Save
+    if rank == 0:
+        save_path = os.path.join(args.output, "final")
+        os.makedirs(save_path, exist_ok=True)
+        unwrapped_model = model.module if hasattr(model, "module") else model
+        unwrapped_model.model.save_pretrained(save_path)
+        tokenizer.save_pretrained(save_path)
+        logger.info(f"Training complete. Model saved to {save_path}")
+
+    cleanup_ddp()
 
 if __name__ == "__main__":
     main()

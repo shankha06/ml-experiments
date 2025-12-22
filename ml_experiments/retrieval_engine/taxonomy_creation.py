@@ -243,6 +243,52 @@ if __name__ == "__main__":
         print(f"ID: {n.id} | Name: {n.name}")
         print(f"Desc: {n.description} (Used for embedding)\n")
 
+prompt = f"""
+You are the Principal Information Architect for Chase Bank. You are building a hierarchical navigation system for our Knowledge Base.
+I will provide a cluster of "tags" extracted from FAQ documents. 
+
+YOUR TASK:
+Synthesize these tags into a single, canonical Category Name and a precise Definition.
+
+INPUT CONTEXT (Level {level}):
+- Level 0 = Raw tags (very specific, e.g., "routing number", "late fee").
+- Level 1+ = Descriptions of child clusters (broader, e.g., "Account attributes").
+- A lower level (0) requires specific operational names. A higher level (2+) requires strategic business domains.
+
+STRICT GUARDRAILS:
+1. **Terminology**: Use standard American banking terminology (e.g., use "Checking Accounts" not "Current Accounts", use "Funds Transfer" not "Money Moving").
+2. **Conciseness**: The 'category_name' must be 2-4 words maximum. Title Case.
+3. **No Fluff**: NEVER start descriptions with "This category contains..." or "Tags related to...". Start directly with the definition.
+4. **Granularity**: If the tags are about "Zelle" and "Wire", the category is "Payments & Transfers", NOT just "Services".
+5. **Handling Noise**: If the tags are incoherent or unrelated (e.g., "login", "mortgage", "tacos"), label the category "Miscellaneous / Uncategorized".
+
+---
+EXAMPLES:
+
+Input: ["routing number", "swift code", "bank address", "account number", "identifying branch"]
+Output: {{
+    "category_name": "Account Identification & Routing",
+    "description": "Details and numerical identifiers required to locate accounts and process inbound/outbound transactions.",
+}}
+
+Input: ["forgot password", "locked out", "reset pin", "biometric login", "user ID recovery"]
+Output: {{
+    "category_name": "Access & Authentication",
+    "description": "Protocols and troubleshooting steps for verifying user identity and restoring access to digital banking platforms.",
+}}
+
+Input: ["rewards balance", "cash back redemption", "ultimate rewards points", "travel partner transfer"]
+Output: {{
+    "category_name": "Loyalty & Rewards Program",
+    "description": "Management of earned benefits, point balances, and redemption options for credit card loyalty programs.",
+}}
+---
+
+CURRENT CLUSTER TAGS:
+{", ".join(context_items)}
+
+Output the JSON response:
+"""
 # # --- MAIN EXECUTION ---
 # if __name__ == "__main__":
 #     # 1. Setup Data

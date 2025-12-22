@@ -80,7 +80,6 @@ Output valid JSON:
             return {
                 "category_name": "General Banking Group", 
                 "description": "Group created during error fallback.",
-                "examples": context_items[:3]
             }
 
     def _process_single_cluster(self, label: int, child_nodes: List[ClusterNode], current_level: int) -> ClusterNode:
@@ -96,7 +95,6 @@ Output valid JSON:
             meta = {
                 "category_name": f"Miscellaneous Level {current_level}",
                 "description": "Items that did not fit well into dense clusters at this level.",
-                "examples": child_names[:3]
             }
         else:
             # The expensive call

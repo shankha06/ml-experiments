@@ -1,218 +1,247 @@
-import logging
 import json
+import logging
+from dataclasses import dataclass
+from typing import Any, Dict, List
+
+import hdbscan
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Any
-from dataclasses import dataclass
-
-# Manifold & Clustering
 import umap.umap_ as umap
-import hdbscan
 
-# Setup Logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("TaxonomyEngine")
+# Configure Logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("DeepTaxonomy")
 
 @dataclass
-class TaxonomyNode:
+class ClusterNode:
+    id: str
+    level: int
     name: str
     description: str
-    child_tags: List[str]
-    vector: np.ndarray = None  # Embedding of the description
+    child_ids: List[str]  # IDs of nodes in the layer below
+    embedding: np.ndarray = None
 
-class AdvancedTaxonomyBuilder:
-    def __init__(self, embedding_model, llm_wrapper_func, min_cluster_size: int = 5):
-        """
-        Args:
-            embedding_model: SBERT compatible model.
-            llm_wrapper_func: Function signature: func(prompt, role) -> str (JSON string)
-            min_cluster_size: Minimum number of tags to form a valid cluster in HDBSCAN.
-        """
+class RecursiveTaxonomyBuilder:
+    def __init__(self, embedding_model, llm_wrapper_func):
         self.encoder = embedding_model
         self.call_llm = llm_wrapper_func
-        self.min_cluster_size = min_cluster_size
         
-        # UMAP for dimensionality reduction (Crucial for HDBSCAN performance)
-        self.reducer = umap.UMAP(
-            n_neighbors=15, 
-            n_components=10, # Reduce to 10 dimensions for clustering
-            metric='cosine',
-            random_state=42
-        )
-        
-        # HDBSCAN for density-based clustering
-        self.clusterer = hdbscan.HDBSCAN(
-            min_cluster_size=self.min_cluster_size,
-            min_samples=2, # Conservative noise handling
-            metric='euclidean', # UMAP output is Euclidean space
-            cluster_selection_method='eom' # Excess of Mass usually best for text
-        )
+        # Hyperparameters for 25K scale
+        self.umap_params = {
+            'n_neighbors': 10,
+            'n_components': 10,
+            'metric': 'cosine'
+        }
+        self.hdbscan_params = {
+            'min_cluster_size': 10, # Minimum size to be considered a cluster
+            'min_samples': 5,       # Controls how conservative the clustering is
+            'metric': 'cosine',
+            'cluster_selection_method': 'eom' # Excess of Mass (often better for variable densities)
+        }
 
-    def _generate_cluster_metadata(self, tags: List[str]) -> Dict[str, str]:
+    def _generate_cluster_metadata(self, items: List[str], level: int) -> Dict[str, str]:
         """
-        Calls LLM to generate Name and Description for a cluster of tags.
-        Expects structured JSON output.
+        Calls LLM to get structured Name and Description for a list of items.
         """
+        # Context varies: Level 0 are raw tags, Level 1+ are descriptions of previous clusters
+        context_items = items[:30] # Limit context
+        
         prompt = (
-            "You are a Senior Data Catalog Specialist for a Retail & Dining platform. "
-            "I will provide a list of tags belonging to a specific product cluster. "
-            "Analyze them to define the category.\n\n"
-            "Input Tags:\n" + ", ".join(tags[:25]) + "\n\n" # Limit context
-            "Requirements:\n"
-            "1. 'category_name': A concise, standard industry term (e.g., 'Appetizers', 'Men's Footwear').\n"
-            "2. 'description': A clear definition of what belongs here, used for semantic matching.\n"
-            "3. Output MUST be valid JSON.\n\n"
-            "Example JSON Output:\n"
-            "{\n"
-            "  \"category_name\": \"Vegan Entrees\",\n"
-            "  \"description\": \"Plant-based main course dishes excluding meat, dairy, and animal by-products.\"\n"
-            "}"
+            f"You are a Retail and Dining Taxonomy Architect. I have a cluster of {len(items)} items. "
+            "Analyze them and define the specific category they belong to.\n"
+            "ITEMS:\n" + ", ".join(context_items) + "\n\n"
+            "REQUIREMENTS:\n"
+            "1. Output valid JSON only.\n"
+            "2. 'category_name': A short, precise business label (e.g., 'Gluten-Free Pastries').\n"
+            "3. 'description': A detailed definition explaining what this category covers (used for semantic matching).\n"
+            "4. 'examples': 3 representative examples from the list.\n"
+            f"Context Level: {level} (Lower is more specific, Higher is broader)."
         )
-        
-        try:
-            response_str = self.call_llm(
-                prompt=prompt, 
-                role="Taxonomy Architect"
-            )
-            # Clean generic markdown fences if present
-            clean_json = response_str.replace("```json", "").replace("```", "").strip()
-            return json.loads(clean_json)
-        except json.JSONDecodeError:
-            logger.error(f"Failed to decode JSON for cluster: {tags[:3]}")
-            return {"category_name": "Uncategorized Cluster", "description": "Auto-generation failed."}
-        except Exception as e:
-            logger.error(f"LLM Failure: {e}")
-            return {"category_name": "Error", "description": "Error in processing."}
 
-    def fit_transform(self, canonical_tags: List[str]) -> List[TaxonomyNode]:
-        logger.info(f"Starting Taxonomy Build for {len(canonical_tags)} tags.")
+        try:
+            # Assuming wrapper returns a dict or JSON string
+            response = self.call_llm(prompt=prompt, role="Taxonomy Architect")
+            if isinstance(response, str):
+                return json.loads(response)
+            return response
+        except Exception as e:
+            logger.error(f"LLM Error on Level {level}: {e}")
+            return {
+                "category_name": "Uncategorized Group", 
+                "description": "Automatic grouping of diverse items.",
+                "examples": items[:3]
+            }
+
+    def _cluster_vectors(self, embeddings: np.ndarray):
+        """
+        Performs UMAP reduction followed by HDBSCAN clustering.
+        """
+        # 1. Dimensionality Reduction (Critical for HDBSCAN performance)
+        # If data is small (<100), skip UMAP or use lower neighbors
+        if embeddings.shape[0] < 50:
+             # Fallback for top layers where N is small
+            clusterer = hdbscan.HDBSCAN(min_cluster_size=2, min_samples=1)
+            labels = clusterer.fit_predict(embeddings)
+            return labels
+
+        reducer = umap.UMAP(**self.umap_params)
+        reduced_data = reducer.fit_transform(embeddings)
+
+        # 2. Density Clustering
+        clusterer = hdbscan.HDBSCAN(**self.hdbscan_params)
+        labels = clusterer.fit_predict(reduced_data)
         
-        if len(canonical_tags) < self.min_cluster_size:
-            logger.warning("Not enough tags to cluster. Returning single root node.")
+        # Note: HDBSCAN returns -1 for noise. 
+        # Strategy: We will treat -1 as a "Misc" bucket for this iteration.
+        return labels
+
+    def build_layer(self, nodes: List[ClusterNode], current_level: int) -> List[ClusterNode]:
+        """
+        Recursive function to build one layer of the taxonomy.
+        nodes: The nodes from the previous layer (or raw tags wrapper as nodes).
+        """
+        node_count = len(nodes)
+        logger.info(f"--- Processing Layer {current_level} with {node_count} nodes ---")
+
+        # STOPPING CONDITION: If we have too few nodes to cluster effectively
+        if node_count < 20: 
+            logger.info("Stopping recursion: Too few nodes to cluster further.")
             return []
 
-        # 1. Vectorize (High-Dim)
-        logger.info("Generating SBERT embeddings...")
-        high_dim_embeddings = self.encoder.encode(canonical_tags, show_progress_bar=False)
+        # 1. Prepare Embeddings for this layer
+        # If Level 0, we embed the tag names.
+        # If Level > 0, we embed the DESCRIPTION of the child node.
+        texts_to_embed = [n.description if n.description else n.name for n in nodes]
+        embeddings = self.encoder.encode(texts_to_embed, show_progress_bar=False)
 
-        # 2. Dimensionality Reduction (UMAP)
-        # HDBSCAN struggles with high dimensionality (curse of dimensionality). 
-        # Reducing to ~10-15 dims preserves local structure while making density apparent.
-        logger.info("Reducing dimensions with UMAP...")
-        low_dim_embeddings = self.reducer.fit_transform(high_dim_embeddings)
-
-        # 3. Density Clustering (HDBSCAN)
-        logger.info("Clustering with HDBSCAN...")
-        labels = self.clusterer.fit_predict(low_dim_embeddings)
-        
-        # Analyze distribution
+        # 2. Cluster
+        labels = self._cluster_vectors(embeddings)
         unique_labels = set(labels)
-        n_clusters = len(unique_labels) - (1 if -1 in unique_labels else 0)
-        n_noise = list(labels).count(-1)
-        logger.info(f"Found {n_clusters} clusters. {n_noise} tags identified as noise (-1).")
+        n_clusters = len(unique_labels) - (1 if -1 in labels else 0)
+        logger.info(f"Layer {current_level}: Found {n_clusters} clusters (plus noise).")
 
-        # 4. Grouping & LLM Enrichment
-        # We group tags by their HDBSCAN label
-        df = pd.DataFrame({'tag': canonical_tags, 'label': labels})
+        # 3. Process Clusters into New Parent Nodes
+        new_layer_nodes = []
         
-        taxonomy_nodes = []
+        # Group indices by label
+        df = pd.DataFrame({'node_obj': nodes, 'label': labels})
+        
+        for label, group in df.groupby('label'):
+            # Get the child nodes belonging to this cluster
+            child_nodes = group['node_obj'].tolist()
+            child_ids = [n.id for n in child_nodes]
+            
+            # Extract text representation for LLM
+            # For the prompt, we use the NAMES of the children
+            child_names = [n.name for n in child_nodes]
 
-        for label_id in unique_labels:
-            if label_id == -1:
-                continue # Skip noise for now, or handle separately
+            if label == -1:
+                # Handling Noise: For now, we create a "Misc" node, 
+                # or you could choose to pass these directly to the next layer (orphan adoption).
+                meta = {
+                    "category_name": f"Miscellaneous Level {current_level}",
+                    "description": "Items that did not fit well into dense clusters at this level.",
+                    "examples": child_names[:3]
+                }
+            else:
+                meta = self._generate_cluster_metadata(child_names, current_level)
 
-            cluster_tags = df[df['label'] == label_id]['tag'].tolist()
-            
-            # Ask LLM for Name/Description
-            logger.info(f"Processing Cluster {label_id} ({len(cluster_tags)} tags)...")
-            metadata = self._generate_cluster_metadata(cluster_tags)
-            
-            # 5. Create 'Upper Layer' Embedding
-            # We embed the DESCRIPTION of the category. This is powerful because
-            # it captures the *intent* of the category, not just the keywords.
-            cat_vector = self.encoder.encode(metadata['description'])
-            
-            node = TaxonomyNode(
-                name=metadata['category_name'],
-                description=metadata['description'],
-                child_tags=cluster_tags,
-                vector=cat_vector
+            # Create the Parent Node
+            new_node = ClusterNode(
+                id=f"L{current_level+1}_C{label}", # Unique ID
+                level=current_level + 1,
+                name=meta.get('category_name'),
+                description=meta.get('description'),
+                child_ids=child_ids
             )
-            taxonomy_nodes.append(node)
+            new_layer_nodes.append(new_node)
 
-        return taxonomy_nodes
+        # 4. Recursion
+        # The new parent nodes become the input for the next layer up
+        parent_layer = self.build_layer(new_layer_nodes, current_level + 1)
+        
+        # Return current layer nodes + any nodes created above them
+        return new_layer_nodes + parent_layer
 
-# --- MOCKING INFRASTRUCTURE ---
+    def execute(self, raw_tags: List[str]):
+        # Bootstrapping Level 0 Nodes
+        logger.info("Initializing Level 0 Nodes...")
+        l0_nodes = []
+        for i, tag in enumerate(raw_tags):
+            l0_nodes.append(ClusterNode(
+                id=f"L0_{i}",
+                level=0,
+                name=tag,
+                description=tag, # Raw tags description is themselves
+                child_ids=[]     # Leaf nodes have no children
+            ))
+
+        # Start Recursion
+        hierarchy_nodes = self.build_layer(l0_nodes, current_level=0)
+        
+        # Combine L0 and upper layers for full flat list (or organize into tree)
+        all_nodes = l0_nodes + hierarchy_nodes
+        return all_nodes
+
+# --- MOCKING & USAGE ---
 
 class MockSBERT:
     def encode(self, texts, show_progress_bar=False):
-        # Return structured noise to simulate clusters for UMAP/HDBSCAN
-        # If input is a single string (description), return 1 vector
-        if isinstance(texts, str):
-            return np.random.rand(384)
-        
-        count = len(texts)
-        # Create 3 distinct blobs of data to ensure HDBSCAN finds something
-        if count > 10:
-            blob1 = np.random.normal(0, 0.1, (count // 3, 384))
-            blob2 = np.random.normal(5, 0.1, (count // 3, 384))
-            blob3 = np.random.normal(10, 0.1, (count - 2 * (count // 3), 384))
-            return np.vstack([blob1, blob2, blob3])
-        return np.random.rand(count, 384)
+        # Return random 384-dim vectors
+        return np.random.rand(len(texts), 384)
 
-def mock_structured_llm_wrapper(prompt, role):
+def mock_structured_llm(prompt, role):
     """
-    Simulates a smart LLM returning JSON based on context clues.
+    Simulates a structured JSON response.
     """
-    if "sushi" in prompt.lower() or "tempura" in prompt.lower():
-        return json.dumps({
-            "category_name": "Japanese Cuisine",
-            "description": "Traditional dishes from Japan including raw fish, rice, and battered frying."
-        })
+    # Logic to simulate different responses based on input keywords
+    if "sushi" in prompt.lower() or "burger" in prompt.lower():
+        cat = "Fast Food & Dining"
+        desc = "Establishments and products related to ready-to-eat meals and dining experiences."
     elif "shirt" in prompt.lower() or "denim" in prompt.lower():
-        return json.dumps({
-            "category_name": "Men's Casual Wear",
-            "description": "Informal clothing items for men including tops and bottoms suitable for daily wear."
-        })
+        cat = "Apparel & Fashion"
+        desc = "Clothing items including tops, bottoms, and outerwear for men and women."
     else:
-        return json.dumps({
-            "category_name": "General Retail",
-            "description": "Miscellaneous retail products."
-        })
+        cat = "General Retail"
+        desc = "Various consumer goods available for purchase."
 
-# --- MAIN EXECUTION FLOW ---
+    return {
+        "category_name": cat,
+        "description": desc,
+        "examples": ["Example A", "Example B", "Example C"]
+    }
 
 if __name__ == "__main__":
-    # 1. Dataset: Retail/Dining Tags
-    tags = [
-        # Cluster 1: Japanese Food
-        "sushi roll", "nigiri", "sashimi", "tempura shrimp", "miso soup", "wasabi", "soy sauce",
-        # Cluster 2: Clothing
-        "denim jeans", "cotton t-shirt", "flannel shirt", "cargo pants", "hoodie", "polo shirt",
-        # Noise
-        "random database error", "server timeout"
-    ]
+    # 1. Generate Fake Data (200 tags to test flow, usually you'd have 25k)
+    # Using repetition to simulate clusters
+    tags = ["Sushi Roll"] * 50 + ["Cheese Burger"] * 50 + ["Denim Jacket"] * 50 + ["Cotton Shirt"] * 50
     
-    # 2. Init
-    model = MockSBERT()
-    builder = AdvancedTaxonomyBuilder(
-        embedding_model=model, 
-        llm_wrapper_func=mock_structured_llm_wrapper,
-        min_cluster_size=3 # Low number for this tiny demo
-    )
-
-    # 3. Execute
-    nodes = builder.fit_transform(tags)
-
-    # 4. Inspect Results
-    print(f"\nSuccessfully built {len(nodes)} Taxonomy Nodes.\n")
+    # 2. Initialize
+    # Replace MockSBERT with SentenceTransformer('all-MiniLM-L6-v2')
+    # Replace mock_structured_llm with your actual LLM call
+    builder = RecursiveTaxonomyBuilder(MockSBERT(), mock_structured_llm)
     
-    for i, node in enumerate(nodes):
-        print(f"--- Node {i+1}: {node.name} ---")
-        print(f"Description: {node.description}")
-        print(f"Vector Shape: {node.vector.shape}")
-        print(f"Child Tags: {node.child_tags[:5]}...")
-        print("")
+    # 3. Build
+    logger.info("Starting Taxonomy Build...")
+    full_taxonomy = builder.execute(tags)
+    
+    # 4. Inspect Output
+    print(f"\nTotal Nodes Created: {len(full_taxonomy)}")
+    
+    # Filter for Level 1 Nodes (First Clustering Layer)
+    l1_nodes = [n for n in full_taxonomy if n.level == 1]
+    print(f"\n--- Level 1 Clusters (Expected ~1k-2k in prod) ---")
+    for n in l1_nodes[:3]:
+        print(f"ID: {n.id} | Name: {n.name}")
+        print(f"Desc: {n.description}")
+        print(f"Children Count: {len(n.child_ids)}\n")
+
+    # Filter for Level 2 Nodes (Higher Level)
+    l2_nodes = [n for n in full_taxonomy if n.level == 2]
+    print(f"\n--- Level 2 Clusters (Expected ~500 in prod) ---")
+    for n in l2_nodes[:3]:
+        print(f"ID: {n.id} | Name: {n.name}")
+        print(f"Desc: {n.description} (Used for embedding)\n")
 
 # # --- MAIN EXECUTION ---
 # if __name__ == "__main__":

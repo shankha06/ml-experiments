@@ -13,29 +13,31 @@ https://data-scientist-shankha.s3.amazonaws.com/model.tar.gz?AWSAccessKeyId=AKIA
 
 Hi Team,
 
-As some of you may already know, today marks my last day as a Lead Data Scientist here at JPMC.
+Today marks my last day as a Lead Data Scientist here at JPMC — and it’s one of those days that feels both bittersweet and full of gratitude.
 
-Before I log off for the final time, I wanted to take a moment to express my sincere gratitude to all of you across the Bangalore and Hyderabad teams. Working alongside such a talented group of professionals has been an absolute privilege. I have learned a tremendous amount from our collaborations, spirited discussions, and the complex challenges we’ve tackled together.
+I wanted to take a moment to sincerely thank each of you across the Bangalore and Hyderabad teams. Working alongside such a talented, driven, and genuinely warm group of people has been one of the highlights of my career. The collaborations, the group discussions, the spirited debates — I’ll carry all of it with me.
 
-I have always tried my best to support the team and help out wherever I could, but the truth is, I received just as much guidance and inspiration from all of you.
+I’ve always tried to give my best to this team, but the truth is, I walked away from every interaction having learned something new. You all pushed me to think harder, question assumptions, and grow in ways I didn’t expect.
 
-Whenever we hit a wall on a complex model or a tough data problem, I always leaned on a variation of a famous quote that became my personal guiding principle:
+Whenever we hit a wall on a tough problem, I came back to a principle that guided me throughout:
 
-"Stay Hungry, Stay Foolish, Stay Curious."
+> *"Stay Hungry. Stay Foolish. Stay Curious."*
 
-Maintaining that mindset is what consistently helped me find solutions, and I see that exact same drive in this team every single day. I have no doubt that you will all continue to build incredible things and push the boundaries of what we can achieve with data.
+I see that exact drive alive in this team every single day — and I have no doubt you’ll continue building remarkable things.
 
-Please don't be a stranger! I would love to stay connected and follow your future successes. You can reach me here:
+Please stay in touch. I’d genuinely love to follow your journeys and hear about the great work ahead.
 
-Email: [Your Personal Email Address]
+| | |
+|---|---|
+| 📧 **Email** | [shankharay.917@gmail.com](mailto:shankharay.917@gmail.com) |
+| 💼 **LinkedIn** | [shankha-deep-roy](https://www.linkedin.com/in/shankha-deep-roy/) |
+| 📱 **Phone** | *(available on request)* |
 
-LinkedIn: [Your LinkedIn Profile Link]
+Thank you for the camaraderie, the shared knowledge, and the memories that will stay with me long after I’ve logged off.
 
-Phone: [Your Phone Number - Optional]
-
-Thank you again for the camaraderie, the knowledge shared, and the great memories. Wishing you all the very best, both personally and professionally.
+Wishing you all the very best — personally and professionally.
 
 Warmly,
 
-[Your Name]
-Lead Data Scientist
+**Shankha Deep Roy**
+*Lead Data Scientist*

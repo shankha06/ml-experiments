@@ -74,6 +74,13 @@ dev = [
     "sgl-kernel>=0.2.10",
     "flashinfer-python>=0.3.1",
 ]
+agents = [
+    "google-adk>=1.27.0",
+    "langgraph>=1.1.0",
+    "langchain-google-genai>=2.1.0",
+    "langchain>=1.2.12",
+    "langchain-community>=0.4.1",
+]
 infra = [
     "boto3>=1.38.24",
     "opensearch-py>=2.8.0",

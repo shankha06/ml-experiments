@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:google.github.io)",
+      "WebFetch(domain:docs.langchain.com)",
+      "WebFetch(domain:realpython.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:langchain-ai.github.io)",
+      "WebFetch(domain:dev.to)",
+      "Bash(uv add:*)",
+      "Bash(uv run:*)"
+    ]
+  }
+}
